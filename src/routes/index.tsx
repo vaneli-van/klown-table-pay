@@ -51,9 +51,10 @@ const offers = [
     name: "Split the bill without the stress",
     tag: "Klown PAY",
     cta: "SEE HOW IT WORKS ↗",
-    image: "/klown-pay.png",
+    image: dessertParfait.url,
     href: "#how",
   },
+
   {
     name: "Come back to more",
     tag: "Klown REWARDS",
