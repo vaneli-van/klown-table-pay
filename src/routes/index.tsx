@@ -212,11 +212,11 @@ function Index() {
           className="press ghana-restaurants"
           aria-label="Featured restaurants in the Klown collection"
         >
-          <img src="/kozo-logo.png" alt="Kozo logo" />
-          <img src="/aya-logo.png" alt="AYA Restaurant logo" />
-          <img src="/bella-logo.png" alt="Bella Africa logo" />
-          <img src="/skybar-logo.png" alt="SkyBar 25 logo" />
-          <img src="/saint-pablo-logo.png" alt="Saint Pablo logo" />
+          <img src={kozoLogo.url} alt="Kozo logo" />
+          <img src={ayaLogo.url} alt="AYA Restaurant logo" />
+          <img src={bellaLogo.url} alt="Bella Afrik logo" />
+          <img src={skybarLogo.url} alt="SkyBar 25 logo" />
+          <img src={saintPabloLogo.url} alt="Saint Pablo logo" />
         </div>
       </section>
 
