@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 import dessertParfait from "../assets/dessert-parfait.jpg.asset.json";
+import klownHardwareAsset from "../assets/klown-hardware.png.asset.json";
 import pastaBowl from "../assets/pasta-bowl.jpg.asset.json";
 import restaurantInterior from "../assets/restaurant-interior.jpg.asset.json";
 import { Logo } from "../components/Logo";
@@ -236,8 +237,8 @@ function Index() {
           <div className="feature-art cards-art">
             <img
               className="cards-photo"
-              src="/klown-cards.png"
-              alt="Klown membership tier cards"
+              src={klownHardwareAsset.url}
+              alt="Klown table device with QR code and tap-to-pay"
             />
           </div>
         </article>
