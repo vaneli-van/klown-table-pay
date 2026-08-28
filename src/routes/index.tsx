@@ -41,9 +41,10 @@ const offers = [
     name: "Earn from your first Klown payment",
     tag: "WELCOME TO Klown",
     cta: "JOIN Klown ↗",
-    image: "/klown-cards.png",
+    image: restaurantInterior.url,
     href: "#signup",
   },
+
   {
     name: "Split the bill without the stress",
     tag: "Klown PAY",
