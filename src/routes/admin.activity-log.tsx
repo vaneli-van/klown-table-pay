@@ -1,50 +1,42 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "@/components/AdminLayout";
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
+import { relTime } from "@/lib/format";
 
 const TITLE = "Activity Log";
-
 export const Route = createFileRoute("/admin/activity-log")({
-  head: () => ({
-    meta: [
-      { title: `Klown Admin — ${TITLE}` },
-      { name: "description", content: `Klown staff console: ${TITLE}.` },
-      { property: "og:title", content: `Klown Admin — ${TITLE}` },
-      { property: "og:description", content: `Klown staff console: ${TITLE}.` },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () => ({ meta: [{ title: `Klown Admin — ${TITLE}` }, { name: "description", content: `Klown staff console: ${TITLE}.` }] }),
   component: Page,
 });
-
-const LOG = [
-  { who: "Ama Mensah", action: "Requested refund", record: "Bill #48213 · GH₵ 346.50", when: "10:44" },
-  { who: "System", action: "Synced Odoo menu", record: "Kozo · 307 items (12 updated)", when: "10:40" },
-  { who: "Kwesi Boateng", action: "Activated POS connection", record: "AYA · SambaPOS", when: "09:58" },
-  { who: "Samuel", action: "Invited staff", record: "efua@klown.com · Read-Only Analyst", when: "09:31" },
-  { who: "Efua Owusu", action: "Added tables", record: "Bistro 22 · 4 tables", when: "Yesterday" },
-  { who: "Ama Mensah", action: "Changed member tier", record: "Adjoa Nyarko → Inner Circle", when: "Yesterday" },
-];
+type L = { id: string; actor_name: string | null; action: string; record_type: string | null; record_label: string | null; created_at: string };
 const COLS = "1fr 1.2fr 1.8fr .7fr";
 
 function Page() {
+  const { staff } = useAuth();
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["activity_log", staff?.id], enabled: !!staff,
+    queryFn: async (): Promise<L[]> => {
+      const { data, error } = await supabase.from("activity_log").select("id,actor_name,action,record_type,record_label,created_at").order("created_at", { ascending: false }).limit(200);
+      if (error) throw error; return (data ?? []) as L[];
+    },
+  });
+  const all = data ?? [];
   return (
     <AdminLayout title={TITLE}>
-      <section className="ops-intro">
-        <div><h2>Activity log</h2><p>An immutable record of every privileged action in the console. Prototype.</p></div>
-      </section>
+      <section className="ops-intro"><div><h2>Activity log</h2><p>An immutable record of every privileged action in the console.</p></div></section>
       <div className="restaurant-table" style={{ marginTop: 12 }}>
-        <div className="restaurant-table-head" style={{ gridTemplateColumns: COLS, minWidth: 760 }}>
-          <span>Actor</span><span>Action</span><span>Record</span><span>When</span>
-        </div>
-        {LOG.map((l, i) => (
-          <div className="restaurant-table-row" key={i} style={{ gridTemplateColumns: COLS, minWidth: 760 }}>
-            <span className="restaurant-name" style={{ cursor: "default" }}><span className="restaurant-logo">{l.who[0]}</span><span><b>{l.who}</b></span></span>
-            <span>{l.action}</span>
-            <span>{l.record}</span>
-            <span>{l.when}</span>
-          </div>
-        ))}
+        <div className="restaurant-table-head" style={{ gridTemplateColumns: COLS, minWidth: 760 }}><span>Actor</span><span>Action</span><span>Record</span><span>When</span></div>
+        {isLoading ? <div className="empty-state"><h3>Loading…</h3></div>
+          : error ? <div className="empty-state"><h3>Couldn't load</h3><p>{(error as any).message}</p></div>
+          : all.length === 0 ? <div className="empty-state"><h3>No activity yet</h3><p>Privileged actions (refunds, invites, status changes) will be recorded here.</p></div>
+          : all.map((l) => (
+            <div className="restaurant-table-row" key={l.id} style={{ gridTemplateColumns: COLS, minWidth: 760 }}>
+              <span className="restaurant-name" style={{ cursor: "default" }}><span className="restaurant-logo">{(l.actor_name || "?")[0]}</span><span><b>{l.actor_name ?? "System"}</b></span></span>
+              <span>{l.action}</span><span>{l.record_label ?? l.record_type ?? "—"}</span><span>{relTime(l.created_at)}</span>
+            </div>
+          ))}
       </div>
     </AdminLayout>
   );
