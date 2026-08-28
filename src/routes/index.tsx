@@ -236,8 +236,8 @@ function Index() {
           <div className="feature-art cards-art">
             <img
               className="cards-photo"
-              src="/klown-cards.png"
-              alt="Klown membership tier cards"
+              src={klownHardwareAsset.url}
+              alt="Klown table device with QR code and tap-to-pay"
             />
           </div>
         </article>
