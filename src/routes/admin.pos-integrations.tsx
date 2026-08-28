@@ -1,7 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import AdminLayout from "@/components/AdminLayout";
+import { useQuery } from "@tanstack/react-query";
 import { Toast, useToast, useEscape } from "@/components/prototype";
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
+import { titleCase, relTime } from "@/lib/format";
 
 const TITLE = "POS Integrations";
 
@@ -64,13 +68,6 @@ const PROVIDERS: {
     ] },
 ];
 
-const CONNECTIONS = [
-  { rest: "Kozo", provider: "Odoo", status: "Live", health: "Healthy", sync: "2 min ago" },
-  { rest: "Saint Pablo", provider: "Odoo", status: "Live", health: "Healthy", sync: "25 min ago" },
-  { rest: "AYA", provider: "SambaPOS", status: "Live", health: "Healthy", sync: "11 min ago" },
-  { rest: "Bistro 22", provider: "Omega", status: "Testing", health: "Issue", sync: "1 hr ago" },
-  { rest: "SkyBar 25", provider: "Manual menu", status: "Configuration", health: "Offline", sync: "—" },
-];
 
 const CAPS = ["Menu sync", "Orders", "Payments", "Tables", "Modifiers", "Stock", "Webhooks", "Realtime"];
 const MATRIX: Record<string, ("y" | "p" | "n")[]> = {
@@ -86,6 +83,16 @@ function Page() {
   const { toast, show } = useToast();
   const [connect, setConnect] = useState<(typeof PROVIDERS)[number] | null>(null);
   const [tested, setTested] = useState(false);
+  const { staff } = useAuth();
+  const { data: conns = [], isLoading: connLoading } = useQuery({
+    queryKey: ["admin_pos_directory", staff?.id],
+    enabled: !!staff,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("admin_pos_directory").select("*").order("restaurant_name");
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
   useEscape(() => { setConnect(null); setTested(false); });
 
   const capDot = (v: "y" | "p" | "n") =>
@@ -101,10 +108,10 @@ function Page() {
       </section>
 
       <div className="pos-kpis">
-        <div><span>Connected POS</span><b>5</b><small>across 5 restaurants</small></div>
-        <div><span>Healthy</span><b>3</b><small className="green">live &amp; syncing</small></div>
-        <div><span>Needs attention</span><b>1</b><small>Omega degraded</small></div>
-        <div><span>Sync jobs today</span><b>128</b><small className="green">99.1% success</small></div>
+        <div><span>Connected POS</span><b>{connLoading ? "…" : conns.length}</b><small>across {connLoading ? "…" : new Set(conns.map((c:any)=>c.restaurant_id)).size} restaurants</small></div>
+        <div><span>Healthy</span><b>{connLoading ? "…" : conns.filter((c:any)=>c.health==="healthy").length}</b><small className="green">live &amp; syncing</small></div>
+        <div><span>Needs attention</span><b>{connLoading ? "…" : conns.filter((c:any)=>c.health && c.health!=="healthy").length}</b></div>
+        <div><span>Live connections</span><b>{connLoading ? "…" : conns.filter((c:any)=>c.status==="live").length}</b><small className="green">reading real data</small></div>
       </div>
 
       <div className="provider-grid">
@@ -132,12 +139,12 @@ function Page() {
         <div className="panel">
           <div className="panel-heading"><div><span className="panel-kicker">Active connections</span><h2>Live POS links</h2></div></div>
           <div className="connection-list">
-            {CONNECTIONS.map((c) => (
-              <div key={c.rest}>
-                <span className="provider-logo mini">{c.provider[0]}</span>
-                <span><b>{c.rest} · {c.provider}</b><small>Last sync {c.sync}</small></span>
-                <span className={c.health === "Healthy" ? "healthy" : c.health === "Issue" ? "issue" : "offline"}>● {c.health}</span>
-                <span className={c.status === "Live" ? "status-pill live" : "status-pill"}>{c.status}</span>
+            {connLoading ? <div className="empty-state"><h3>Loading…</h3></div> : conns.length === 0 ? <div className="empty-state"><h3>No connections yet</h3></div> : conns.map((c: any) => (
+              <div key={c.id}>
+                <span className="provider-logo mini">{(titleCase(c.provider) || "?")[0]}</span>
+                <span><b>{c.restaurant_name} · {titleCase(c.provider)}</b><small>Last sync {relTime(c.last_sync_at)}</small></span>
+                <span className={c.health === "healthy" ? "healthy" : c.health === "offline" ? "offline" : "issue"}>● {titleCase(c.health) || "—"}</span>
+                <span className={c.status === "live" ? "status-pill live" : "status-pill"}>{titleCase(c.status) || "—"}</span>
               </div>
             ))}
           </div>
