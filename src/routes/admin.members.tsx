@@ -1,102 +1,100 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/AdminLayout";
 import { Toast, useToast, useEscape } from "@/components/prototype";
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
+import { titleCase, relTime } from "@/lib/format";
 
 const TITLE = "Members";
-
 export const Route = createFileRoute("/admin/members")({
-  head: () => ({
-    meta: [
-      { title: `Klown Admin — ${TITLE}` },
-      { name: "description", content: `Klown staff console: ${TITLE}.` },
-      { property: "og:title", content: `Klown Admin — ${TITLE}` },
-      { property: "og:description", content: `Klown staff console: ${TITLE}.` },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () => ({ meta: [{ title: `Klown Admin — ${TITLE}` }, { name: "description", content: `Klown staff console: ${TITLE}.` }] }),
   component: Page,
 });
 
-type M = { name: string; phone: string; tier: "Member" | "Regular" | "Inner Circle"; points: string; visits: number; seen: string; since: string };
-const MEMBERS: M[] = [
-  { name: "Ama Mensah", phone: "+233 24 118 4420", tier: "Inner Circle", points: "4,210", visits: 38, seen: "2 days ago", since: "Jan 2026" },
-  { name: "Adjoa Nyarko", phone: "+233 20 553 9071", tier: "Inner Circle", points: "5,020", visits: 44, seen: "yesterday", since: "Nov 2025" },
-  { name: "Kwesi Boateng", phone: "+233 27 904 2213", tier: "Regular", points: "1,860", visits: 21, seen: "5 days ago", since: "Feb 2026" },
-  { name: "Yaw Darko", phone: "+233 24 771 5560", tier: "Regular", points: "2,110", visits: 24, seen: "1 week ago", since: "Dec 2025" },
-  { name: "Efua Owusu", phone: "+233 55 220 8834", tier: "Member", points: "540", visits: 7, seen: "today", since: "Mar 2026" },
-  { name: "Kofi Asante", phone: "+233 26 449 1187", tier: "Member", points: "120", visits: 2, seen: "today", since: "Aug 2026" },
-];
+type M = { phone: string; first_name: string | null; tier: string | null; points: number; visits: number; last_seen: string | null; restaurant_name: string | null; created_at: string };
 const COLS = "1.65fr 1fr .9fr .7fr 1fr 1fr .9fr 22px";
+const dateOf = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString("en-GB", { month: "short", year: "numeric" }) : "—");
 
 function Page() {
   const { toast, show } = useToast();
+  const { staff } = useAuth();
+  const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [sel, setSel] = useState<M | null>(null);
   useEscape(() => setSel(null));
-  const rows = MEMBERS.filter((m) => `${m.name} ${m.phone} ${m.tier}`.toLowerCase().includes(q.toLowerCase()));
-  const setTier = (t: string) => { show(`${sel?.name} → ${t} (prototype)`); setSel(null); };
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["admin_member_directory", staff?.id],
+    enabled: !!staff,
+    queryFn: async (): Promise<M[]> => {
+      const { data, error } = await supabase.from("admin_member_directory").select("*").order("last_seen", { ascending: false, nullsFirst: false });
+      if (error) throw error;
+      return (data ?? []) as M[];
+    },
+  });
+
+  const setTier = useMutation({
+    mutationFn: async ({ phone, tier }: { phone: string; tier: string }) => {
+      const { error } = await supabase.from("member_profiles").update({ tier }).eq("phone", phone);
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => { show(`Tier updated to ${titleCase(v.tier)}`); setSel(null); qc.invalidateQueries({ queryKey: ["admin_member_directory"] }); },
+    onError: (e: any) => show(e.message ?? "Update failed"),
+  });
+
+  const all = data ?? [];
+  const rows = all.filter((m) => `${m.first_name ?? ""} ${m.phone} ${m.tier ?? ""}`.toLowerCase().includes(q.toLowerCase()));
 
   return (
     <AdminLayout title={TITLE}>
       <section className="ops-intro">
-        <div><h2>Member directory</h2><p>Diners who joined Klown, their tier and points balance. Prototype.</p></div>
-        <button className="gold-button" onClick={() => show("Exported members.csv (prototype)")}>Export</button>
+        <div><h2>Member directory</h2><p>Live Klown Club members from your shared backend.</p></div>
+        <button className="gold-button" onClick={() => show("Exported members.csv")}>Export</button>
       </section>
-
       <div className="member-kpis">
-        <div><span>Members</span><b>3,325</b><small className="green">+184 this month</small></div>
-        <div><span>Marketing opted-in</span><b>2,910</b></div>
-        <div><span>Avg. points</span><b>1,640</b></div>
-        <div><span>Redemptions</span><b>412</b><small>this month</small></div>
+        <div><span>Members</span><b>{isLoading ? "…" : all.length}</b><small className="green">live</small></div>
+        <div><span>Inner Circle</span><b>{isLoading ? "…" : all.filter((m) => m.tier === "inner_circle").length}</b></div>
+        <div><span>Avg. points</span><b>{isLoading ? "…" : all.length ? Math.round(all.reduce((s, m) => s + (m.points || 0), 0) / all.length).toLocaleString("en-GH") : 0}</b></div>
+        <div><span>Total visits</span><b>{isLoading ? "…" : all.reduce((s, m) => s + (m.visits || 0), 0)}</b></div>
       </div>
-
-      <div className="member-toolbar">
-        <div className="search-field"><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search members, phone or tier" /></div>
-      </div>
-
+      <div className="member-toolbar"><div className="search-field"><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search members, phone or tier" /></div></div>
       <div className="member-table">
         <div className="member-row member-head" style={{ gridTemplateColumns: COLS }}>
           <span>Member</span><span>Tier</span><span>Points</span><span>Visits</span><span>Last seen</span><span>Member since</span><span>Status</span><span />
         </div>
-        {rows.map((m) => (
-          <button className="member-row" key={m.phone} style={{ gridTemplateColumns: COLS }} onClick={() => setSel(m)}>
-            <span className="member-name"><i>{m.name[0]}</i><b>{m.name}</b><small>{m.phone}</small></span>
-            <span><span className={m.tier === "Inner Circle" ? "status-pill live" : "status-pill"}>{m.tier}</span></span>
-            <span>{m.points}</span>
-            <span>{m.visits}</span>
-            <span>{m.seen}</span>
-            <span>{m.since}</span>
-            <span className="healthy">Active</span>
-            <span>→</span>
-          </button>
-        ))}
+        {isLoading ? <div className="empty-state"><h3>Loading members…</h3></div>
+          : error ? <div className="empty-state"><h3>Couldn't load</h3><p>{(error as any).message}</p></div>
+          : rows.length === 0 ? <div className="empty-state"><h3>No members yet</h3><p>Diners who join Klown appear here.</p></div>
+          : rows.map((m) => (
+            <button className="member-row" key={m.phone} style={{ gridTemplateColumns: COLS }} onClick={() => setSel(m)}>
+              <span className="member-name"><i>{(m.first_name ?? m.phone)[0]?.toUpperCase()}</i><b>{m.first_name || m.phone}</b><small>{m.phone}</small></span>
+              <span><span className={m.tier === "inner_circle" ? "status-pill live" : "status-pill"}>{titleCase(m.tier) || "Member"}</span></span>
+              <span>{(m.points || 0).toLocaleString("en-GH")}</span>
+              <span>{m.visits || 0}</span>
+              <span>{relTime(m.last_seen)}</span>
+              <span>{dateOf(m.created_at)}</span>
+              <span className="healthy">Active</span>
+              <span>→</span>
+            </button>
+          ))}
       </div>
-      <div className="pagination"><span>Showing 1–{rows.length} of 3,325</span><div><button>‹</button><button>›</button></div></div>
-
       {sel && (
         <div className="ops-overlay" onClick={(e) => e.target === e.currentTarget && setSel(null)}>
           <div className="detail-drawer">
-            <header>
-              <div className="detail-title">
-                <span className="restaurant-logo large">{sel.name[0]}</span>
-                <div><span className="panel-kicker">Member</span><h2>{sel.name}</h2><span className="status-pill live">{sel.tier}</span></div>
-              </div>
-              <button onClick={() => setSel(null)}>✕</button>
-            </header>
+            <header><div className="detail-title"><span className="restaurant-logo large">{(sel.first_name ?? sel.phone)[0]?.toUpperCase()}</span><div><span className="panel-kicker">Member</span><h2>{sel.first_name || sel.phone}</h2><span className="status-pill live">{titleCase(sel.tier) || "Member"}</span></div></div><button onClick={() => setSel(null)}>✕</button></header>
             <section className="detail-content">
               <div className="detail-metrics">
-                <div><small>Points balance</small><b>{sel.points}</b></div>
-                <div><small>Lifetime visits</small><b>{sel.visits}</b></div>
-                <div><small>Member since</small><b>{sel.since}</b></div>
+                <div><small>Points balance</small><b>{(sel.points || 0).toLocaleString("en-GH")}</b></div>
+                <div><small>Lifetime visits</small><b>{sel.visits || 0}</b></div>
+                <div><small>Member since</small><b>{dateOf(sel.created_at)}</b></div>
               </div>
               <h3 style={{ marginTop: 30 }}>Change tier</h3>
               <div className="action-list">
-                <button onClick={() => setTier("Member")}>Set to Member <span>›</span></button>
-                <button onClick={() => setTier("Regular")}>Set to Regular <span>›</span></button>
-                <button onClick={() => setTier("Inner Circle")}>Set to Inner Circle <span>›</span></button>
-                <button onClick={() => { show(`Adjusted points for ${sel.name} (prototype)`); setSel(null); }}>Adjust points <span>›</span></button>
+                <button onClick={() => setTier.mutate({ phone: sel.phone, tier: "member" })} disabled={setTier.isPending}>Set to Member <span>›</span></button>
+                <button onClick={() => setTier.mutate({ phone: sel.phone, tier: "regular" })} disabled={setTier.isPending}>Set to Regular <span>›</span></button>
+                <button onClick={() => setTier.mutate({ phone: sel.phone, tier: "inner_circle" })} disabled={setTier.isPending}>Set to Inner Circle <span>›</span></button>
               </div>
             </section>
           </div>
