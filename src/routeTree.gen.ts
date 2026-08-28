@@ -10,33 +10,258 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminActivityLogRouteImport } from './routes/admin.activity-log'
+import { Route as AdminBillsPaymentsRouteImport } from './routes/admin.bills-payments'
+import { Route as AdminMembersRouteImport } from './routes/admin.members'
+import { Route as AdminMenusRouteImport } from './routes/admin.menus'
+import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
+import { Route as AdminPointsRouteImport } from './routes/admin.points'
+import { Route as AdminPosIntegrationsRouteImport } from './routes/admin.pos-integrations'
+import { Route as AdminRestaurantsRouteImport } from './routes/admin.restaurants'
+import { Route as AdminRewardsRouteImport } from './routes/admin.rewards'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminStaffAccessRouteImport } from './routes/admin.staff-access'
+import { Route as AdminSubscribersRouteImport } from './routes/admin.subscribers'
+import { Route as AdminSupportRouteImport } from './routes/admin.support'
+import { Route as AdminTablesDevicesRouteImport } from './routes/admin.tables-devices'
+import { Route as AdminTiersRouteImport } from './routes/admin.tiers'
+import { Route as AdminAuthScreenRouteImport } from './routes/admin.auth.$screen'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminActivityLogRoute = AdminActivityLogRouteImport.update({
+  id: '/admin/activity-log',
+  path: '/admin/activity-log',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminBillsPaymentsRoute = AdminBillsPaymentsRouteImport.update({
+  id: '/admin/bills-payments',
+  path: '/admin/bills-payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminMembersRoute = AdminMembersRouteImport.update({
+  id: '/admin/members',
+  path: '/admin/members',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminMenusRoute = AdminMenusRouteImport.update({
+  id: '/admin/menus',
+  path: '/admin/menus',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
+  id: '/admin/notifications',
+  path: '/admin/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPointsRoute = AdminPointsRouteImport.update({
+  id: '/admin/points',
+  path: '/admin/points',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPosIntegrationsRoute = AdminPosIntegrationsRouteImport.update({
+  id: '/admin/pos-integrations',
+  path: '/admin/pos-integrations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRestaurantsRoute = AdminRestaurantsRouteImport.update({
+  id: '/admin/restaurants',
+  path: '/admin/restaurants',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRewardsRoute = AdminRewardsRouteImport.update({
+  id: '/admin/rewards',
+  path: '/admin/rewards',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/admin/settings',
+  path: '/admin/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminStaffAccessRoute = AdminStaffAccessRouteImport.update({
+  id: '/admin/staff-access',
+  path: '/admin/staff-access',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSubscribersRoute = AdminSubscribersRouteImport.update({
+  id: '/admin/subscribers',
+  path: '/admin/subscribers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSupportRoute = AdminSupportRouteImport.update({
+  id: '/admin/support',
+  path: '/admin/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminTablesDevicesRoute = AdminTablesDevicesRouteImport.update({
+  id: '/admin/tables-devices',
+  path: '/admin/tables-devices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminTiersRoute = AdminTiersRouteImport.update({
+  id: '/admin/tiers',
+  path: '/admin/tiers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAuthScreenRoute = AdminAuthScreenRouteImport.update({
+  id: '/admin/auth/$screen',
+  path: '/admin/auth/$screen',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin/activity-log': typeof AdminActivityLogRoute
+  '/admin/bills-payments': typeof AdminBillsPaymentsRoute
+  '/admin/members': typeof AdminMembersRoute
+  '/admin/menus': typeof AdminMenusRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/points': typeof AdminPointsRoute
+  '/admin/pos-integrations': typeof AdminPosIntegrationsRoute
+  '/admin/restaurants': typeof AdminRestaurantsRoute
+  '/admin/rewards': typeof AdminRewardsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/staff-access': typeof AdminStaffAccessRoute
+  '/admin/subscribers': typeof AdminSubscribersRoute
+  '/admin/support': typeof AdminSupportRoute
+  '/admin/tables-devices': typeof AdminTablesDevicesRoute
+  '/admin/tiers': typeof AdminTiersRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/auth/$screen': typeof AdminAuthScreenRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin/activity-log': typeof AdminActivityLogRoute
+  '/admin/bills-payments': typeof AdminBillsPaymentsRoute
+  '/admin/members': typeof AdminMembersRoute
+  '/admin/menus': typeof AdminMenusRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/points': typeof AdminPointsRoute
+  '/admin/pos-integrations': typeof AdminPosIntegrationsRoute
+  '/admin/restaurants': typeof AdminRestaurantsRoute
+  '/admin/rewards': typeof AdminRewardsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/staff-access': typeof AdminStaffAccessRoute
+  '/admin/subscribers': typeof AdminSubscribersRoute
+  '/admin/support': typeof AdminSupportRoute
+  '/admin/tables-devices': typeof AdminTablesDevicesRoute
+  '/admin/tiers': typeof AdminTiersRoute
+  '/admin': typeof AdminIndexRoute
+  '/admin/auth/$screen': typeof AdminAuthScreenRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin/activity-log': typeof AdminActivityLogRoute
+  '/admin/bills-payments': typeof AdminBillsPaymentsRoute
+  '/admin/members': typeof AdminMembersRoute
+  '/admin/menus': typeof AdminMenusRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/points': typeof AdminPointsRoute
+  '/admin/pos-integrations': typeof AdminPosIntegrationsRoute
+  '/admin/restaurants': typeof AdminRestaurantsRoute
+  '/admin/rewards': typeof AdminRewardsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/staff-access': typeof AdminStaffAccessRoute
+  '/admin/subscribers': typeof AdminSubscribersRoute
+  '/admin/support': typeof AdminSupportRoute
+  '/admin/tables-devices': typeof AdminTablesDevicesRoute
+  '/admin/tiers': typeof AdminTiersRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/auth/$screen': typeof AdminAuthScreenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin/activity-log'
+    | '/admin/bills-payments'
+    | '/admin/members'
+    | '/admin/menus'
+    | '/admin/notifications'
+    | '/admin/points'
+    | '/admin/pos-integrations'
+    | '/admin/restaurants'
+    | '/admin/rewards'
+    | '/admin/settings'
+    | '/admin/staff-access'
+    | '/admin/subscribers'
+    | '/admin/support'
+    | '/admin/tables-devices'
+    | '/admin/tiers'
+    | '/admin/'
+    | '/admin/auth/$screen'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/admin/activity-log'
+    | '/admin/bills-payments'
+    | '/admin/members'
+    | '/admin/menus'
+    | '/admin/notifications'
+    | '/admin/points'
+    | '/admin/pos-integrations'
+    | '/admin/restaurants'
+    | '/admin/rewards'
+    | '/admin/settings'
+    | '/admin/staff-access'
+    | '/admin/subscribers'
+    | '/admin/support'
+    | '/admin/tables-devices'
+    | '/admin/tiers'
+    | '/admin'
+    | '/admin/auth/$screen'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin/activity-log'
+    | '/admin/bills-payments'
+    | '/admin/members'
+    | '/admin/menus'
+    | '/admin/notifications'
+    | '/admin/points'
+    | '/admin/pos-integrations'
+    | '/admin/restaurants'
+    | '/admin/rewards'
+    | '/admin/settings'
+    | '/admin/staff-access'
+    | '/admin/subscribers'
+    | '/admin/support'
+    | '/admin/tables-devices'
+    | '/admin/tiers'
+    | '/admin/'
+    | '/admin/auth/$screen'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminActivityLogRoute: typeof AdminActivityLogRoute
+  AdminBillsPaymentsRoute: typeof AdminBillsPaymentsRoute
+  AdminMembersRoute: typeof AdminMembersRoute
+  AdminMenusRoute: typeof AdminMenusRoute
+  AdminNotificationsRoute: typeof AdminNotificationsRoute
+  AdminPointsRoute: typeof AdminPointsRoute
+  AdminPosIntegrationsRoute: typeof AdminPosIntegrationsRoute
+  AdminRestaurantsRoute: typeof AdminRestaurantsRoute
+  AdminRewardsRoute: typeof AdminRewardsRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminStaffAccessRoute: typeof AdminStaffAccessRoute
+  AdminSubscribersRoute: typeof AdminSubscribersRoute
+  AdminSupportRoute: typeof AdminSupportRoute
+  AdminTablesDevicesRoute: typeof AdminTablesDevicesRoute
+  AdminTiersRoute: typeof AdminTiersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+  AdminAuthScreenRoute: typeof AdminAuthScreenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +273,147 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/activity-log': {
+      id: '/admin/activity-log'
+      path: '/admin/activity-log'
+      fullPath: '/admin/activity-log'
+      preLoaderRoute: typeof AdminActivityLogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/bills-payments': {
+      id: '/admin/bills-payments'
+      path: '/admin/bills-payments'
+      fullPath: '/admin/bills-payments'
+      preLoaderRoute: typeof AdminBillsPaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/members': {
+      id: '/admin/members'
+      path: '/admin/members'
+      fullPath: '/admin/members'
+      preLoaderRoute: typeof AdminMembersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/menus': {
+      id: '/admin/menus'
+      path: '/admin/menus'
+      fullPath: '/admin/menus'
+      preLoaderRoute: typeof AdminMenusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/notifications': {
+      id: '/admin/notifications'
+      path: '/admin/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AdminNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/points': {
+      id: '/admin/points'
+      path: '/admin/points'
+      fullPath: '/admin/points'
+      preLoaderRoute: typeof AdminPointsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/pos-integrations': {
+      id: '/admin/pos-integrations'
+      path: '/admin/pos-integrations'
+      fullPath: '/admin/pos-integrations'
+      preLoaderRoute: typeof AdminPosIntegrationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/restaurants': {
+      id: '/admin/restaurants'
+      path: '/admin/restaurants'
+      fullPath: '/admin/restaurants'
+      preLoaderRoute: typeof AdminRestaurantsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/rewards': {
+      id: '/admin/rewards'
+      path: '/admin/rewards'
+      fullPath: '/admin/rewards'
+      preLoaderRoute: typeof AdminRewardsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/admin/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/staff-access': {
+      id: '/admin/staff-access'
+      path: '/admin/staff-access'
+      fullPath: '/admin/staff-access'
+      preLoaderRoute: typeof AdminStaffAccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/subscribers': {
+      id: '/admin/subscribers'
+      path: '/admin/subscribers'
+      fullPath: '/admin/subscribers'
+      preLoaderRoute: typeof AdminSubscribersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/support': {
+      id: '/admin/support'
+      path: '/admin/support'
+      fullPath: '/admin/support'
+      preLoaderRoute: typeof AdminSupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/tables-devices': {
+      id: '/admin/tables-devices'
+      path: '/admin/tables-devices'
+      fullPath: '/admin/tables-devices'
+      preLoaderRoute: typeof AdminTablesDevicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/tiers': {
+      id: '/admin/tiers'
+      path: '/admin/tiers'
+      fullPath: '/admin/tiers'
+      preLoaderRoute: typeof AdminTiersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/auth/$screen': {
+      id: '/admin/auth/$screen'
+      path: '/admin/auth/$screen'
+      fullPath: '/admin/auth/$screen'
+      preLoaderRoute: typeof AdminAuthScreenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminActivityLogRoute: AdminActivityLogRoute,
+  AdminBillsPaymentsRoute: AdminBillsPaymentsRoute,
+  AdminMembersRoute: AdminMembersRoute,
+  AdminMenusRoute: AdminMenusRoute,
+  AdminNotificationsRoute: AdminNotificationsRoute,
+  AdminPointsRoute: AdminPointsRoute,
+  AdminPosIntegrationsRoute: AdminPosIntegrationsRoute,
+  AdminRestaurantsRoute: AdminRestaurantsRoute,
+  AdminRewardsRoute: AdminRewardsRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
+  AdminStaffAccessRoute: AdminStaffAccessRoute,
+  AdminSubscribersRoute: AdminSubscribersRoute,
+  AdminSupportRoute: AdminSupportRoute,
+  AdminTablesDevicesRoute: AdminTablesDevicesRoute,
+  AdminTiersRoute: AdminTiersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+  AdminAuthScreenRoute: AdminAuthScreenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
