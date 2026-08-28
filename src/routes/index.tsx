@@ -61,10 +61,11 @@ const offers = [
     name: "Come back to more",
     tag: "Klown REWARDS",
     cta: "EXPLORE REWARDS ↗",
-    image: "/klown-table.png",
+    image: pastaBowl.url,
     href: "#club",
   },
 ];
+
 
 const tiers = [
   {
