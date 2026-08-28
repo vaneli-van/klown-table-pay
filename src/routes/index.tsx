@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
+import restaurantInterior from "../assets/restaurant-interior.jpg.asset.json";
 import { Logo } from "../components/Logo";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
