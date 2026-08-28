@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
+import restaurantInterior from "../assets/restaurant-interior.jpg.asset.json";
 import { Logo } from "../components/Logo";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -39,9 +41,10 @@ const offers = [
     name: "Earn from your first Klown payment",
     tag: "WELCOME TO Klown",
     cta: "JOIN Klown ↗",
-    image: "/klown-cards.png",
+    image: restaurantInterior.url,
     href: "#signup",
   },
+
   {
     name: "Split the bill without the stress",
     tag: "Klown PAY",
