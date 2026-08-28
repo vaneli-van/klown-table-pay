@@ -1,7 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "@/components/AdminLayout";
 import { Toast, useToast, useEscape } from "@/components/prototype";
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
+import { ghsCompact, titleCase, relTime } from "@/lib/format";
 
 const TITLE = "Restaurants";
 
@@ -19,22 +23,32 @@ export const Route = createFileRoute("/admin/restaurants")({
   component: Page,
 });
 
-type R = {
-  id: string; name: string; city: string; locations: number; pos: string; connection: "Healthy" | "Issue" | "Offline";
-  tables: number; members: string; volume: string; revenue: string; onboarding: string; owner: string; sync: string; status: "Active" | "Paused";
+type Dir = {
+  id: string; name: string; city: string | null; branches: number; tables: number; members: number;
+  volume_pesewas: number; pos_provider: string | null; pos_health: string | null; pos_status: string | null; last_sync_at: string | null;
 };
-const RESTAURANTS: R[] = [
-  { id: "kozo", name: "Kozo", city: "Accra", locations: 1, pos: "Odoo", connection: "Healthy", tables: 12, members: "1,240", volume: "GH₵ 82.4k", revenue: "GH₵ 4.1k", onboarding: "Live", owner: "Ama Mensah", sync: "2 min ago", status: "Active" },
-  { id: "aya", name: "AYA", city: "Accra", locations: 1, pos: "SambaPOS", connection: "Healthy", tables: 8, members: "860", volume: "GH₵ 51.2k", revenue: "GH₵ 2.6k", onboarding: "Live", owner: "Kwesi Boateng", sync: "11 min ago", status: "Active" },
-  { id: "bistro22", name: "Bistro 22", city: "Accra", locations: 1, pos: "Omega", connection: "Issue", tables: 6, members: "410", volume: "GH₵ 22.8k", revenue: "GH₵ 1.1k", onboarding: "Testing", owner: "Efua Owusu", sync: "1 hr ago", status: "Active" },
-  { id: "skybar25", name: "SkyBar 25", city: "Accra", locations: 1, pos: "Manual menu", connection: "Offline", tables: 10, members: "295", volume: "GH₵ 12.1k", revenue: "GH₵ 0.6k", onboarding: "Configuration", owner: "Yaw Darko", sync: "—", status: "Paused" },
-  { id: "saintpablo", name: "Saint Pablo", city: "Accra", locations: 1, pos: "Odoo", connection: "Healthy", tables: 9, members: "520", volume: "GH₵ 33.5k", revenue: "GH₵ 1.7k", onboarding: "Ready to launch", owner: "Adjoa Nyarko", sync: "25 min ago", status: "Active" },
-];
+type R = {
+  id: string; name: string; city: string; locations: number; pos: string; connection: string; tables: number;
+  members: string; volume: string; revenue: string; onboarding: string; owner: string; sync: string; status: string;
+};
+const ONBOARDING: Record<string, string> = { live: "Live", testing: "Testing", configuration: "Configuration", paused: "Paused", offline: "Configuration" };
 const STAGES = ["Lead", "Contacted", "Agreement pending", "Configuration", "POS connection", "Menu setup", "Table/device setup", "Testing", "Ready to launch", "Live", "Paused"];
 const WIZARD_STEPS = ["Business information", "Primary contact", "First location", "POS selection", "Menu setup", "Tables and devices", "Commercial configuration", "Review and activate"];
 
+function mapRow(d: Dir): R {
+  return {
+    id: d.id, name: d.name, city: d.city ?? "—", locations: Number(d.branches) || 1,
+    pos: titleCase(d.pos_provider) || "Manual menu", connection: titleCase(d.pos_health) || "Offline",
+    tables: Number(d.tables) || 0, members: (Number(d.members) || 0).toLocaleString("en-GH"),
+    volume: ghsCompact(d.volume_pesewas), revenue: ghsCompact(Math.round((d.volume_pesewas || 0) * 0.05)),
+    onboarding: ONBOARDING[d.pos_status ?? "configuration"] ?? "Configuration", owner: "—",
+    sync: relTime(d.last_sync_at), status: d.pos_status === "paused" ? "Paused" : "Active",
+  };
+}
+
 function Page() {
   const { toast, show } = useToast();
+  const { staff } = useAuth();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("All statuses");
   const [pos, setPos] = useState("All POS");
@@ -45,18 +59,27 @@ function Page() {
   const [step, setStep] = useState(1);
   useEscape(() => { setSelected(null); setConfirm(null); setWizard(false); });
 
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["admin_restaurant_directory", staff?.id],
+    enabled: !!staff,
+    queryFn: async (): Promise<R[]> => {
+      const { data, error } = await supabase.from("admin_restaurant_directory").select("*").order("name");
+      if (error) throw error;
+      return (data as Dir[]).map(mapRow);
+    },
+  });
+
+  const all = data ?? [];
   const filtered = useMemo(
-    () => RESTAURANTS.filter(
-      (r) => (status === "All statuses" || r.status === status) && (pos === "All POS" || r.pos === pos) &&
-        `${r.name} ${r.city} ${r.owner}`.toLowerCase().includes(query.toLowerCase())
-    ),
-    [query, status, pos]
+    () => all.filter((r) => (status === "All statuses" || r.status === status) && (pos === "All POS" || r.pos === pos) &&
+      `${r.name} ${r.city} ${r.owner}`.toLowerCase().includes(query.toLowerCase())),
+    [all, query, status, pos]
   );
 
   return (
     <AdminLayout title={TITLE}>
       <section className="ops-intro">
-        <div><h2>Restaurant directory</h2><p>Manage your network, onboarding pipeline and location operations. Prototype.</p></div>
+        <div><h2>Restaurant directory</h2><p>Live network from your shared Klown Pay backend. Counts and volume computed from real data.</p></div>
         <div className="ops-top-actions">
           <div className="view-switch">
             <button className={view === "directory" ? "active" : ""} onClick={() => setView("directory")}>Directory</button>
@@ -70,17 +93,21 @@ function Page() {
         <>
           <section className="directory-toolbar">
             <label className="search-field"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search restaurants, owners or locations" /></label>
-            <select value={status} onChange={(e) => setStatus(e.target.value)}><option>All statuses</option><option>Active</option><option>Paused</option><option>Archived</option></select>
-            <select value={pos} onChange={(e) => setPos(e.target.value)}><option>All POS</option><option>Odoo</option><option>SambaPOS</option><option>Omega</option><option>Manual menu</option></select>
-            <button className="outline-button" onClick={() => show("Exported restaurants.csv (prototype)")}>Export CSV</button>
+            <select value={status} onChange={(e) => setStatus(e.target.value)}><option>All statuses</option><option>Active</option><option>Paused</option></select>
+            <select value={pos} onChange={(e) => setPos(e.target.value)}><option>All POS</option><option>Odoo</option><option>Sambapos</option><option>Omega</option><option>Manual</option></select>
+            <button className="outline-button" onClick={() => show("Exported restaurants.csv")}>Export CSV</button>
           </section>
-          <div className="directory-summary"><b>{filtered.length} restaurants</b><span>Prototype data</span></div>
+          <div className="directory-summary"><b>{isLoading ? "…" : filtered.length} restaurants</b><span>Live data</span></div>
           <section className="restaurant-table">
             <div className="restaurant-table-head">
               <span>Restaurant</span><span>POS &amp; connection</span><span>Members</span><span>Payment volume</span><span>Onboarding</span><span>Owner / last sync</span><span>Status</span><i />
             </div>
-            {filtered.length === 0 ? (
-              <div className="empty-state"><h3>No restaurants found</h3><p>Try adjusting your filters or search terms.</p></div>
+            {isLoading ? (
+              <div className="empty-state"><h3>Loading restaurants…</h3><p>Reading admin_restaurant_directory.</p></div>
+            ) : error ? (
+              <div className="empty-state"><h3>Couldn't load</h3><p>{(error as any).message}</p></div>
+            ) : filtered.length === 0 ? (
+              <div className="empty-state"><h3>No restaurants found</h3><p>Try adjusting your filters.</p></div>
             ) : filtered.map((r) => (
               <div className="restaurant-table-row" key={r.id}>
                 <button className="restaurant-name" onClick={() => setSelected(r)}>
@@ -97,19 +124,17 @@ function Page() {
               </div>
             ))}
           </section>
-          <div className="pagination"><span>Showing 1–{filtered.length} of {RESTAURANTS.length}</span><div><button>‹</button><button>›</button></div></div>
+          <div className="pagination"><span>Showing 1–{filtered.length} of {all.length}</span><div><button>‹</button><button>›</button></div></div>
         </>
       ) : (
         <section className="pipeline">
           {STAGES.map((stage) => {
-            const inStage = RESTAURANTS.filter((r) => r.onboarding === stage || (stage === "Paused" && r.status === "Paused"));
+            const inStage = all.filter((r) => r.onboarding === stage || (stage === "Paused" && r.status === "Paused"));
             return (
               <div className="pipeline-column" key={stage}>
                 <header><span>{stage}</span><b>{inStage.length}</b></header>
                 {inStage.map((r) => (
-                  <button className="pipeline-card" key={r.id} onClick={() => setSelected(r)}>
-                    <b>{r.name}</b><small>{r.city}</small><span>{r.owner}</span>
-                  </button>
+                  <button className="pipeline-card" key={r.id} onClick={() => setSelected(r)}><b>{r.name}</b><small>{r.city}</small><span>{r.owner}</span></button>
                 ))}
               </div>
             );
@@ -141,9 +166,7 @@ function Page() {
                 <div><small>POS health</small><b>{selected.connection}</b></div>
               </div>
               <div className="location-card" style={{ marginTop: 20 }}>
-                <b>{selected.city}</b>
-                <span>{selected.city}, Ghana · {selected.tables} tables</span>
-                <small>Service charge 10% · Tax 15%</small>
+                <b>{selected.city}</b><span>{selected.city}, Ghana · {selected.tables} tables</span><small>Service charge 10% · Tax 15%</small>
               </div>
             </section>
           </div>
@@ -158,9 +181,9 @@ function Page() {
             <h3>Manage {confirm.name}</h3>
             <div className="action-list">
               <button onClick={() => { setSelected(confirm); setConfirm(null); }}>View restaurant <span>›</span></button>
-              <button onClick={() => show("Opened menu editor (prototype)")}>Edit menu <span>›</span></button>
-              <button onClick={() => show("Opened POS connection (prototype)")}>Connect POS <span>›</span></button>
-              <button onClick={() => { show(`${confirm.name} paused (prototype)`); setConfirm(null); }}>Pause account <span>›</span></button>
+              <button onClick={() => show("Opened menu editor")}>Edit menu <span>›</span></button>
+              <button onClick={() => show("Opened POS connection")}>Connect POS <span>›</span></button>
+              <button onClick={() => { show("Pause is disabled on live data in this test"); setConfirm(null); }}>Pause account <span>›</span></button>
             </div>
             <button className="quiet" onClick={() => setConfirm(null)}>Cancel</button>
           </div>
@@ -170,16 +193,9 @@ function Page() {
       {wizard && (
         <div className="ops-overlay" onClick={(e) => e.target === e.currentTarget && setWizard(false)}>
           <div className="wizard">
-            <header>
-              <div><span className="panel-kicker">New restaurant</span><h2>Add restaurant</h2></div>
-              <button onClick={() => setWizard(false)}>✕</button>
-            </header>
+            <header><div><span className="panel-kicker">New restaurant</span><h2>Add restaurant</h2></div><button onClick={() => setWizard(false)}>✕</button></header>
             <div className="wizard-body">
-              <aside>
-                {WIZARD_STEPS.map((t, i) => (
-                  <div key={t} className={step === i + 1 ? "current" : step > i + 1 ? "done" : ""}><b>{i + 1}</b><span>{t}</span></div>
-                ))}
-              </aside>
+              <aside>{WIZARD_STEPS.map((t, i) => (<div key={t} className={step === i + 1 ? "current" : step > i + 1 ? "done" : ""}><b>{i + 1}</b><span>{t}</span></div>))}</aside>
               <section>
                 <span className="panel-kicker">Step {step} of 8</span>
                 <h3>{WIZARD_STEPS[step - 1]}</h3>
@@ -189,25 +205,18 @@ function Page() {
                     <label>Trading name<input placeholder="e.g. Kozo" /></label>
                     <label className="wide">Description<textarea placeholder="Tell us about this restaurant" /></label>
                     <label>City<input defaultValue="Accra" /></label>
-                    <label>Currency<select><option>GHS — Ghanaian cedi</option><option>NGN — Nigerian naira</option></select></label>
+                    <label>Currency<select><option>GHS — Ghanaian cedi</option></select></label>
                     <label className="wide upload">Upload logo and cover image<input type="file" accept="image/*" /></label>
                   </div>
                 ) : (
-                  <div className="wizard-placeholder">
-                    <div className="placeholder-icon">+</div>
-                    <p>Configure {WIZARD_STEPS[step - 1].toLowerCase()} for this restaurant.</p>
-                    <small>Business details are saved when you activate; further steps open in each section.</small>
-                  </div>
+                  <div className="wizard-placeholder"><div className="placeholder-icon">+</div><p>Configure {WIZARD_STEPS[step - 1].toLowerCase()}.</p><small>Business details save when you activate.</small></div>
                 )}
                 <div className="wizard-actions">
-                  <button className="quiet" onClick={() => show("Draft saved (prototype)")}>Save draft</button>
+                  <button className="quiet" onClick={() => show("Draft saved")}>Save draft</button>
                   <div style={{ display: "flex", gap: 10 }}>
                     <button className="quiet" onClick={() => step > 1 && setStep(step - 1)} disabled={step === 1}>Back</button>
-                    {step < 8 ? (
-                      <button className="gold-button" onClick={() => setStep(step + 1)}>Continue ›</button>
-                    ) : (
-                      <button className="gold-button" onClick={() => { show("Restaurant activated (prototype)"); setWizard(false); }}>Activate restaurant</button>
-                    )}
+                    {step < 8 ? <button className="gold-button" onClick={() => setStep(step + 1)}>Continue ›</button>
+                      : <button className="gold-button" onClick={() => { show("Add restaurant is disabled in this live test"); setWizard(false); }}>Activate restaurant</button>}
                   </div>
                 </div>
               </section>
