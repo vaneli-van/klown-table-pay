@@ -1,19 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
+import AdminLayout, { AdminPlaceholder } from "@/components/AdminLayout";
+
+const TITLE = "POS Integrations";
 
 export const Route = createFileRoute("/admin/pos-integrations")({
   head: () => ({
     meta: [
-      { title: "Klown Admin — pos-integrations" },
-      { name: "description", content: "Klown staff console: pos-integrations." },
-      { property: "og:title", content: "Klown Admin — pos-integrations" },
-      { property: "og:description", content: "Klown staff console: pos-integrations." },
+      { title: `Klown Admin — ${TITLE}` },
+      { name: "description", content: `Klown staff console: ${TITLE}.` },
+      { property: "og:title", content: `Klown Admin — ${TITLE}` },
+      { property: "og:description", content: `Klown staff console: ${TITLE}.` },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: AdminPosIntegrations,
+  component: Page,
 });
 
-function AdminPosIntegrations() {
-  return <div className="admin-placeholder" />;
+function Page() {
+  return (
+    <AdminLayout title={TITLE}>
+      <AdminPlaceholder title={TITLE} />
+    </AdminLayout>
+  );
 }

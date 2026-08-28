@@ -1,19 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
+import AdminLayout, { AdminPlaceholder } from "@/components/AdminLayout";
+
+const TITLE = "Tables & Devices";
 
 export const Route = createFileRoute("/admin/tables-devices")({
   head: () => ({
     meta: [
-      { title: "Klown Admin — tables-devices" },
-      { name: "description", content: "Klown staff console: tables-devices." },
-      { property: "og:title", content: "Klown Admin — tables-devices" },
-      { property: "og:description", content: "Klown staff console: tables-devices." },
+      { title: `Klown Admin — ${TITLE}` },
+      { name: "description", content: `Klown staff console: ${TITLE}.` },
+      { property: "og:title", content: `Klown Admin — ${TITLE}` },
+      { property: "og:description", content: `Klown staff console: ${TITLE}.` },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: AdminTablesDevices,
+  component: Page,
 });
 
-function AdminTablesDevices() {
-  return <div className="admin-placeholder" />;
+function Page() {
+  return (
+    <AdminLayout title={TITLE}>
+      <AdminPlaceholder title={TITLE} />
+    </AdminLayout>
+  );
 }

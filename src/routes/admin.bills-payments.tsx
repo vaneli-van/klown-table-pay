@@ -1,19 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
+import AdminLayout, { AdminPlaceholder } from "@/components/AdminLayout";
+
+const TITLE = "Bills & Payments";
 
 export const Route = createFileRoute("/admin/bills-payments")({
   head: () => ({
     meta: [
-      { title: "Klown Admin — bills-payments" },
-      { name: "description", content: "Klown staff console: bills-payments." },
-      { property: "og:title", content: "Klown Admin — bills-payments" },
-      { property: "og:description", content: "Klown staff console: bills-payments." },
+      { title: `Klown Admin — ${TITLE}` },
+      { name: "description", content: `Klown staff console: ${TITLE}.` },
+      { property: "og:title", content: `Klown Admin — ${TITLE}` },
+      { property: "og:description", content: `Klown staff console: ${TITLE}.` },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: AdminBillsPayments,
+  component: Page,
 });
 
-function AdminBillsPayments() {
-  return <div className="admin-placeholder" />;
+function Page() {
+  return (
+    <AdminLayout title={TITLE}>
+      <AdminPlaceholder title={TITLE} />
+    </AdminLayout>
+  );
 }
