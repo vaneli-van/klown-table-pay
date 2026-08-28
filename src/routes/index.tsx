@@ -2,8 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 import dessertParfait from "../assets/dessert-parfait.jpg.asset.json";
+import pastaBowl from "../assets/pasta-bowl.jpg.asset.json";
 import restaurantInterior from "../assets/restaurant-interior.jpg.asset.json";
 import { Logo } from "../components/Logo";
+
 
 
 
@@ -59,10 +61,11 @@ const offers = [
     name: "Come back to more",
     tag: "Klown REWARDS",
     cta: "EXPLORE REWARDS ↗",
-    image: "/klown-table.png",
+    image: pastaBowl.url,
     href: "#club",
   },
 ];
+
 
 const tiers = [
   {
