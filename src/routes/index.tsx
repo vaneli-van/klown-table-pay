@@ -1,7 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
+import ayaLogo from "../assets/aya-logo.png.asset.json";
+import bellaLogo from "../assets/bella-logo.png.asset.json";
 import dessertParfait from "../assets/dessert-parfait.jpg.asset.json";
+import kozoLogo from "../assets/kozo-logo.png.asset.json";
+import saintPabloLogo from "../assets/saint-pablo-logo.png.asset.json";
+import skybarLogo from "../assets/skybar-logo.png.asset.json";
 import klownHardwareAsset from "../assets/klown-hardware.png.asset.json";
 import pastaBowl from "../assets/pasta-bowl.jpg.asset.json";
 import restaurantInterior from "../assets/restaurant-interior.jpg.asset.json";
