@@ -5,7 +5,7 @@ import AdminLayout from "@/components/AdminLayout";
 import { Toast, useToast, useEscape } from "@/components/prototype";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { ghsCompact, titleCase, relTime } from "@/lib/format";
+import { ghs, ghsCompact, titleCase, relTime } from "@/lib/format";
 
 const TITLE = "Restaurants";
 
@@ -54,10 +54,12 @@ function Page() {
   const [pos, setPos] = useState("All POS");
   const [view, setView] = useState<"directory" | "pipeline">("directory");
   const [selected, setSelected] = useState<R | null>(null);
+  const [tab, setTab] = useState("Overview");
   const [confirm, setConfirm] = useState<R | null>(null);
   const [wizard, setWizard] = useState(false);
   const [step, setStep] = useState(1);
   useEscape(() => { setSelected(null); setConfirm(null); setWizard(false); });
+  const openR = (r: R) => { setSelected(r); setTab("Overview"); };
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin_restaurant_directory", staff?.id],
@@ -66,6 +68,26 @@ function Page() {
       const { data, error } = await supabase.from("admin_restaurant_directory").select("*").order("name");
       if (error) throw error;
       return (data as Dir[]).map(mapRow);
+    },
+  });
+
+  const { data: detail } = useQuery({
+    queryKey: ["admin_restaurant_detail", selected?.id, staff?.id],
+    enabled: !!staff && !!selected,
+    queryFn: async () => {
+      const rid = selected!.id;
+      const [pos, menu, tables, payments, members, support] = await Promise.all([
+        supabase.from("admin_pos_directory").select("*").eq("restaurant_id", rid),
+        supabase.from("admin_menu_directory").select("*").eq("restaurant_id", rid),
+        supabase.from("admin_table_devices").select("*").eq("restaurant_id", rid),
+        supabase.from("admin_payment_feed").select("*").eq("restaurant_id", rid).order("created_at", { ascending: false }).limit(8),
+        supabase.from("admin_member_directory").select("*").eq("restaurant_id", rid).order("points", { ascending: false }).limit(8),
+        supabase.from("admin_support_queue").select("*").eq("restaurant_name", selected!.name).order("created_at", { ascending: false }).limit(8),
+      ]);
+      return {
+        pos: pos.data ?? [], menu: menu.data ?? [], tables: tables.data ?? [],
+        payments: payments.data ?? [], members: members.data ?? [], support: support.data ?? [],
+      };
     },
   });
 
@@ -110,7 +132,7 @@ function Page() {
               <div className="empty-state"><h3>No restaurants found</h3><p>Try adjusting your filters.</p></div>
             ) : filtered.map((r) => (
               <div className="restaurant-table-row" key={r.id}>
-                <button className="restaurant-name" onClick={() => setSelected(r)}>
+                <button className="restaurant-name" onClick={() => openR(r)}>
                   <span className="restaurant-logo">{r.name[0]}</span>
                   <span><b>{r.name}</b><small>{r.city} · {r.locations} location · {r.tables} tables</small></span>
                 </button>
@@ -134,7 +156,7 @@ function Page() {
               <div className="pipeline-column" key={stage}>
                 <header><span>{stage}</span><b>{inStage.length}</b></header>
                 {inStage.map((r) => (
-                  <button className="pipeline-card" key={r.id} onClick={() => setSelected(r)}><b>{r.name}</b><small>{r.city}</small><span>{r.owner}</span></button>
+                  <button className="pipeline-card" key={r.id} onClick={() => openR(r)}><b>{r.name}</b><small>{r.city}</small><span>{r.owner}</span></button>
                 ))}
               </div>
             );
@@ -153,21 +175,119 @@ function Page() {
               <button onClick={() => setSelected(null)}>✕</button>
             </header>
             <div className="detail-tabs">
-              {["Overview", "Locations", "POS", "Menu", "Bills & Payments", "Members", "Support", "Activity"].map((t, i) => (
-                <button key={t} className={i === 0 ? "active" : ""}>{t}</button>
+              {["Overview", "Locations", "POS", "Menu", "Bills & Payments", "Members", "Support", "Activity"].map((t) => (
+                <button key={t} className={tab === t ? "active" : ""} onClick={() => setTab(t)}>{t}</button>
               ))}
             </div>
             <section className="detail-content">
-              <span className="panel-kicker">Overview</span>
-              <h3>Today at {selected.name}</h3>
-              <div className="detail-metrics">
-                <div><small>Payment volume</small><b>{selected.volume}</b></div>
-                <div><small>Active members</small><b>{selected.members}</b></div>
-                <div><small>POS health</small><b>{selected.connection}</b></div>
-              </div>
-              <div className="location-card" style={{ marginTop: 20 }}>
-                <b>{selected.city}</b><span>{selected.city}, Ghana · {selected.tables} tables</span><small>Service charge 10% · Tax 15%</small>
-              </div>
+              <span className="panel-kicker">{tab}</span>
+
+              {tab === "Overview" && (<>
+                <h3>Today at {selected.name}</h3>
+                <div className="detail-metrics">
+                  <div><small>Payment volume</small><b>{selected.volume}</b></div>
+                  <div><small>Active members</small><b>{selected.members}</b></div>
+                  <div><small>POS health</small><b>{selected.connection}</b></div>
+                </div>
+                <div className="location-card" style={{ marginTop: 20 }}>
+                  <b>{selected.name}</b>
+                  <span>{selected.city}, Ghana · {selected.locations} location{selected.locations === 1 ? "" : "s"} · {selected.tables} tables</span>
+                  <small>{selected.pos} POS · onboarding {selected.onboarding} · synced {selected.sync}</small>
+                </div>
+              </>)}
+
+              {tab === "Locations" && (<>
+                <h3>{selected.locations} location{selected.locations === 1 ? "" : "s"}</h3>
+                {(detail?.menu ?? []).length === 0 && <div className="detail-note"><span>No branches recorded for this restaurant yet.</span></div>}
+                {(detail?.menu ?? []).map((b: any) => {
+                  const pos = (detail?.pos ?? []).find((x: any) => x.branch_id === b.branch_id);
+                  const tables = (detail?.tables ?? []).filter((x: any) => x.branch_id === b.branch_id).length;
+                  return (
+                    <div className="location-card" key={b.branch_id}>
+                      <b>{b.branch_name}</b>
+                      <span>{b.city || selected.city}, Ghana · {tables} tables · {b.items} menu items</span>
+                      <small>POS {pos ? `${titleCase(pos.provider)} · ${titleCase(pos.health)}` : "not connected"} · menu {b.status}</small>
+                    </div>
+                  );
+                })}
+              </>)}
+
+              {tab === "POS" && (<>
+                <h3>POS connections</h3>
+                {(detail?.pos ?? []).length === 0 && <div className="detail-note"><span>No POS connection configured.</span></div>}
+                <div className="connection-list">
+                  {(detail?.pos ?? []).map((x: any) => (
+                    <div key={x.id}>
+                      <span><b>{x.branch_name} · {titleCase(x.provider)}</b><small>{x.credentials_ref || "—"} · synced {relTime(x.last_sync_at)}</small></span>
+                      <span className={`status-badge ${x.health === "healthy" ? "status-success" : x.health === "issue" ? "status-danger" : "status-warning"}`}>{titleCase(x.status)} · {titleCase(x.health)}</span>
+                    </div>
+                  ))}
+                </div>
+              </>)}
+
+              {tab === "Menu" && (<>
+                <h3>Menu</h3>
+                {(detail?.menu ?? []).length === 0 && <div className="detail-note"><span>No menu published yet.</span></div>}
+                <div className="connection-list">
+                  {(detail?.menu ?? []).map((x: any) => (
+                    <div key={x.id}>
+                      <span><b>{x.branch_name} · {x.name}</b><small>{x.categories} categories · {x.items} items · source {x.pos_source} · synced {relTime(x.last_synced_at)}</small></span>
+                      <span className={`status-badge ${x.status === "published" ? "status-success" : "status-warning"}`}>{titleCase(x.status)}</span>
+                    </div>
+                  ))}
+                </div>
+              </>)}
+
+              {tab === "Bills & Payments" && (<>
+                <h3>Recent payments</h3>
+                {(detail?.payments ?? []).length === 0 && <div className="detail-note"><span>No payments recorded for this restaurant yet.</span></div>}
+                <div className="connection-list">
+                  {(detail?.payments ?? []).map((x: any) => (
+                    <div key={x.id}>
+                      <span><b>{ghs(x.total_pesewas)} · {titleCase(x.method) || titleCase(x.provider)}</b><small>{relTime(x.created_at)}{x.tip_pesewas ? ` · tip ${ghs(x.tip_pesewas)}` : ""}{x.refund_status && x.refund_status !== "none" ? ` · refund ${x.refund_status}` : ""}</small></span>
+                      <span className={`status-badge ${x.status === "succeeded" || x.status === "paid" ? "status-success" : x.status === "failed" ? "status-danger" : "status-warning"}`}>{titleCase(x.status)}</span>
+                    </div>
+                  ))}
+                </div>
+              </>)}
+
+              {tab === "Members" && (<>
+                <h3>Members</h3>
+                {(detail?.members ?? []).length === 0 && <div className="detail-note"><span>No members linked to this restaurant yet.</span></div>}
+                <div className="connection-list">
+                  {(detail?.members ?? []).map((x: any, i: number) => (
+                    <div key={i}>
+                      <span><b>{x.first_name || "Guest"} · {titleCase(x.tier)}</b><small>{(Number(x.points) || 0).toLocaleString("en-GH")} points · {x.visits} visits · seen {relTime(x.last_seen)}</small></span>
+                    </div>
+                  ))}
+                </div>
+              </>)}
+
+              {tab === "Support" && (<>
+                <h3>Support tickets</h3>
+                {(detail?.support ?? []).length === 0 && <div className="detail-note"><span>No open support tickets.</span></div>}
+                <div className="connection-list">
+                  {(detail?.support ?? []).map((x: any) => (
+                    <div key={x.id}>
+                      <span><b>{x.subject}</b><small>{titleCase(x.category)} · {x.source} · {relTime(x.created_at)}</small></span>
+                      <span className={`status-badge ${x.status === "resolved" || x.status === "handled" ? "status-success" : "status-warning"}`}>{titleCase(x.status)}</span>
+                    </div>
+                  ))}
+                </div>
+              </>)}
+
+              {tab === "Activity" && (<>
+                <h3>Recent activity</h3>
+                {(detail?.payments ?? []).length === 0 && <div className="detail-note"><span>No recent activity.</span></div>}
+                <div className="connection-list">
+                  {(detail?.payments ?? []).map((x: any) => (
+                    <div key={x.id}>
+                      <span><b>Payment {ghs(x.total_pesewas)} · {titleCase(x.status)}</b><small>{titleCase(x.method) || titleCase(x.provider)} · {relTime(x.created_at)}</small></span>
+                    </div>
+                  ))}
+                </div>
+                <div className="detail-note"><span>Live feed from Klown Pay. Full history is on the Activity log and Bills &amp; Payments screens.</span></div>
+              </>)}
             </section>
           </div>
         </div>
@@ -180,7 +300,7 @@ function Page() {
             <span className="panel-kicker">Restaurant action</span>
             <h3>Manage {confirm.name}</h3>
             <div className="action-list">
-              <button onClick={() => { setSelected(confirm); setConfirm(null); }}>View restaurant <span>›</span></button>
+              <button onClick={() => { openR(confirm); setConfirm(null); }}>View restaurant <span>›</span></button>
               <button onClick={() => show("Opened menu editor")}>Edit menu <span>›</span></button>
               <button onClick={() => show("Opened POS connection")}>Connect POS <span>›</span></button>
               <button onClick={() => { show("Pause is disabled on live data in this test"); setConfirm(null); }}>Pause account <span>›</span></button>
