@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import AdminLayout from "@/components/AdminLayout";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Toast, useToast, useEscape } from "@/components/prototype";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
@@ -93,7 +93,29 @@ function Page() {
       return (data ?? []) as any[];
     },
   });
-  useEscape(() => { setConnect(null); setTested(false); });
+  const qc = useQueryClient();
+  const [odoo, setOdoo] = useState(false);
+  const [of, setOf] = useState({ restaurant_id: "", url: "", db: "", user: "admin", key: "" });
+  const [saving, setSaving] = useState(false);
+  const { data: restaurants = [] } = useQuery({
+    queryKey: ["restaurants_min", staff?.id], enabled: !!staff,
+    queryFn: async () => { const { data, error } = await supabase.from("restaurants").select("id,name").order("name"); if (error) throw error; return (data ?? []) as any[]; },
+  });
+  const { data: odooConfigs = [] } = useQuery({
+    queryKey: ["admin_pos_odoo_config", staff?.id], enabled: !!staff,
+    queryFn: async () => { const { data, error } = await supabase.from("admin_pos_odoo_config").select("*"); if (error) throw error; return (data ?? []) as any[]; },
+  });
+  const saveOdoo = async () => {
+    if (!of.restaurant_id || !of.url.trim() || !of.db.trim()) { show("Restaurant, URL and database are required"); return; }
+    setSaving(true);
+    const { error } = await supabase.rpc("save_pos_odoo_credentials", { p_restaurant_id: of.restaurant_id, p_base_url: of.url.trim(), p_db: of.db.trim(), p_username: of.user.trim(), p_api_key: of.key });
+    setSaving(false);
+    if (error) { show("Save failed: " + error.message); return; }
+    show("Odoo connection saved — the sync will pick it up within a minute");
+    setOdoo(false); setOf({ restaurant_id: "", url: "", db: "", user: "admin", key: "" });
+    qc.invalidateQueries({ queryKey: ["admin_pos_odoo_config"] });
+  };
+  useEscape(() => { setConnect(null); setTested(false); setOdoo(false); });
 
   const capDot = (v: "y" | "p" | "n") =>
     v === "y" ? <span className="cap-yes">●</span> : v === "p" ? <span className="cap-partial">◐</span> : <span className="cap-no">○</span>;
@@ -119,7 +141,7 @@ function Page() {
           <div className="pos-provider-card" key={p.key}>
             <div className="provider-card-top">
               <span className="provider-logo" style={{ background: p.color }}>{p.name[0]}</span>
-              <span className="status-pill">{p.connections} connected</span>
+              <span className="status-pill">{p.key === "odoo" ? odooConfigs.length : p.connections} connected</span>
             </div>
             <h3>{p.name}</h3>
             <p>{p.blurb}</p>
@@ -128,7 +150,7 @@ function Page() {
               <span>{p.connections} live</span>
             </div>
             <div className="provider-card-footer">
-              <button className="gold-button" onClick={() => { setConnect(p); setTested(false); }}>Connect</button>
+              <button className="gold-button" onClick={() => { if (p.key === "odoo") { setOdoo(true); } else { setConnect(p); setTested(false); } }}>{p.key === "odoo" ? "Connect / manage" : "Connect"}</button>
               <button className="outline-button" onClick={() => show(`${p.name} docs (prototype)`)}>Docs</button>
             </div>
           </div>
@@ -223,6 +245,63 @@ function Page() {
                 </div>
               </div>
               <div className="detail-note">Secrets are write-only in the real app — stored server-side and never returned to the browser.</div>
+            </section>
+          </div>
+        </div>
+      )}
+      {odoo && (
+        <div className="ops-overlay" onClick={(e) => e.target === e.currentTarget && setOdoo(false)}>
+          <div className="detail-drawer">
+            <header>
+              <div><span className="panel-kicker">Connect POS · Odoo</span><h2>Connect a restaurant's Odoo</h2></div>
+              <button onClick={() => setOdoo(false)}>✕</button>
+            </header>
+            <section className="detail-content">
+              <p style={{ color: "#77736c", fontSize: 12, margin: "0 0 6px" }}>Enter the restaurant's Odoo details. Orders on its POS tables mirror into the live diner bill automatically. The API key is stored server-side and never shown again.</p>
+              <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 4 }}>
+                <label className="wizard-fields" style={{ display: "block" }}>
+                  <div className="helper-line"><span>Restaurant</span></div>
+                  <select className="wide-input" value={of.restaurant_id} onChange={(e) => setOf({ ...of, restaurant_id: e.target.value })}>
+                    <option value="">Select a restaurant…</option>
+                    {restaurants.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                  </select>
+                </label>
+                <label className="wizard-fields" style={{ display: "block" }}>
+                  <div className="helper-line"><span>Odoo URL</span></div>
+                  <input className="wide-input" placeholder="https://naxos.odoo.com" value={of.url} onChange={(e) => setOf({ ...of, url: e.target.value })} />
+                </label>
+                <label className="wizard-fields" style={{ display: "block" }}>
+                  <div className="helper-line"><span>Database</span></div>
+                  <input className="wide-input" placeholder="naxos-prod" value={of.db} onChange={(e) => setOf({ ...of, db: e.target.value })} />
+                </label>
+                <label className="wizard-fields" style={{ display: "block" }}>
+                  <div className="helper-line"><span>Username</span></div>
+                  <input className="wide-input" placeholder="admin" value={of.user} onChange={(e) => setOf({ ...of, user: e.target.value })} />
+                </label>
+                <label className="wizard-fields" style={{ display: "block" }}>
+                  <div className="helper-line"><span>API key</span><span className="sim-badge">write-only</span></div>
+                  <input className="wide-input" type="password" placeholder="••••••••" value={of.key} onChange={(e) => setOf({ ...of, key: e.target.value })} />
+                  <small style={{ color: "#77736c", fontSize: 9 }}>Leave blank when editing to keep the existing key.</small>
+                </label>
+              </div>
+              {odooConfigs.length > 0 && (
+                <div style={{ marginTop: 18 }}>
+                  <div className="section-label">CONNECTED</div>
+                  <div className="connection-list">
+                    {odooConfigs.map((c: any) => (
+                      <div key={c.restaurant_id}>
+                        <span><b>{c.restaurant_name}</b><small>{c.base_url} · {c.db} · {c.username}</small></span>
+                        <span className={c.key_set ? "healthy" : "issue"}>● {c.key_set ? "Key set" : "No key"}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="wizard-actions">
+                <button className="quiet" onClick={() => setOdoo(false)}>Cancel</button>
+                <button className="gold-button" onClick={saveOdoo} disabled={saving}>{saving ? "Saving…" : "Save connection"}</button>
+              </div>
+              <div className="detail-note">Read-only: the sync only reads open table orders from Odoo — it never writes to your POS. Runs every minute.</div>
             </section>
           </div>
         </div>
