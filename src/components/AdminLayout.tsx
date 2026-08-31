@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
+import PaymentAlerts from "@/components/PaymentAlerts";
 
 const NAV = [
   { to: "/admin", label: "Overview" },
@@ -82,6 +83,7 @@ export default function AdminLayout({ title, children }: { title: string; childr
 
   return (
     <div className="ops-app">
+      <PaymentAlerts />
       <aside className={open ? "ops-sidebar is-open" : "ops-sidebar"}>
         <div className="ops-brand" style={{ paddingTop: 2 }}><img src="/blackbird-logo.png" alt="Klown" style={{ height: 20, width: "auto" }} /></div>
         <nav>
