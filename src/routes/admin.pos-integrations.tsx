@@ -115,7 +115,24 @@ function Page() {
     setOdoo(false); setOf({ restaurant_id: "", url: "", db: "", user: "admin", key: "" });
     qc.invalidateQueries({ queryKey: ["admin_pos_odoo_config"] });
   };
-  useEscape(() => { setConnect(null); setTested(false); setOdoo(false); });
+  const [samba, setSamba] = useState(false);
+  const [sf, setSf] = useState({ restaurant_id: "" });
+  const [newToken, setNewToken] = useState<string | null>(null);
+  const [gen, setGen] = useState(false);
+  const { data: connectors = [] } = useQuery({
+    queryKey: ["admin_pos_connectors", staff?.id], enabled: !!staff,
+    queryFn: async () => { const { data, error } = await supabase.from("admin_pos_connectors").select("*"); if (error) throw error; return (data ?? []) as any[]; },
+  });
+  const genToken = async () => {
+    if (!sf.restaurant_id) { show("Pick a restaurant first"); return; }
+    setGen(true);
+    const { data, error } = await supabase.rpc("create_pos_connector", { p_restaurant_id: sf.restaurant_id, p_name: "SambaPOS connector", p_provider: "sambapos" });
+    setGen(false);
+    if (error) { show("Failed: " + error.message); return; }
+    setNewToken(data as string);
+    qc.invalidateQueries({ queryKey: ["admin_pos_connectors"] });
+  };
+  useEscape(() => { setConnect(null); setTested(false); setOdoo(false); setSamba(false); setNewToken(null); });
 
   const capDot = (v: "y" | "p" | "n") =>
     v === "y" ? <span className="cap-yes">●</span> : v === "p" ? <span className="cap-partial">◐</span> : <span className="cap-no">○</span>;
@@ -141,7 +158,7 @@ function Page() {
           <div className="pos-provider-card" key={p.key}>
             <div className="provider-card-top">
               <span className="provider-logo" style={{ background: p.color }}>{p.name[0]}</span>
-              <span className="status-pill">{p.key === "odoo" ? odooConfigs.length : p.connections} connected</span>
+              <span className="status-pill">{p.key === "odoo" ? odooConfigs.length : p.key === "sambapos" ? connectors.length : p.connections} connected</span>
             </div>
             <h3>{p.name}</h3>
             <p>{p.blurb}</p>
@@ -150,7 +167,7 @@ function Page() {
               <span>{p.connections} live</span>
             </div>
             <div className="provider-card-footer">
-              <button className="gold-button" onClick={() => { if (p.key === "odoo") { setOdoo(true); } else { setConnect(p); setTested(false); } }}>{p.key === "odoo" ? "Connect / manage" : "Connect"}</button>
+              <button className="gold-button" onClick={() => { if (p.key === "odoo") { setOdoo(true); } else if (p.key === "sambapos") { setSamba(true); setNewToken(null); } else { setConnect(p); setTested(false); } }}>{p.key === "odoo" ? "Connect / manage" : "Connect"}</button>
               <button className="outline-button" onClick={() => show(`${p.name} docs (prototype)`)}>Docs</button>
             </div>
           </div>
@@ -245,6 +262,48 @@ function Page() {
                 </div>
               </div>
               <div className="detail-note">Secrets are write-only in the real app — stored server-side and never returned to the browser.</div>
+            </section>
+          </div>
+        </div>
+      )}
+      {samba && (
+        <div className="ops-overlay" onClick={(e) => e.target === e.currentTarget && setSamba(false)}>
+          <div className="detail-drawer">
+            <header>
+              <div><span className="panel-kicker">Connect POS · SambaPOS</span><h2>SambaPOS connector</h2></div>
+              <button onClick={() => setSamba(false)}>✕</button>
+            </header>
+            <section className="detail-content">
+              <p style={{ color: "#77736c", fontSize: 12, margin: "0 0 6px" }}>SambaPOS runs on the restaurant\'s PC, so it connects through the <b>Klown Connector</b> (a small app on that PC). Generate a token, paste it into the connector\'s .env, and run it.</p>
+              <label className="wizard-fields" style={{ display: "block", marginTop: 14 }}>
+                <div className="helper-line"><span>Restaurant</span></div>
+                <select className="wide-input" value={sf.restaurant_id} onChange={(e) => { setSf({ restaurant_id: e.target.value }); setNewToken(null); }}>
+                  <option value="">Select a restaurant…</option>
+                  {restaurants.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                </select>
+              </label>
+              <button className="gold-button" style={{ marginTop: 10 }} onClick={genToken} disabled={gen}>{gen ? "Generating…" : "Generate connector token"}</button>
+              {newToken && (
+                <div className="detail-note" style={{ flexDirection: "column", gap: 6 }}>
+                  <b style={{ fontWeight: 400, color: "var(--ink)" }}>Connector token (shown once) — paste into the connector .env as KLOWN_CONNECTOR_TOKEN</b>
+                  <code style={{ wordBreak: "break-all", fontSize: 11 }}>{newToken}</code>
+                  <button className="outline-button" style={{ alignSelf: "flex-start" }} onClick={() => { navigator.clipboard?.writeText(newToken); show("Token copied"); }}>Copy token</button>
+                </div>
+              )}
+              {connectors.length > 0 && (
+                <div style={{ marginTop: 18 }}>
+                  <div className="section-label">CONNECTORS</div>
+                  <div className="connection-list">
+                    {connectors.map((c: any) => (
+                      <div key={c.id}>
+                        <span><b>{c.restaurant_name} · {c.provider}</b><small>{c.last_seen_at ? "last seen " + relTime(c.last_seen_at) : "never connected"} · auto-close {c.writeback_enabled ? "on" : "off"}</small></span>
+                        <span className={c.last_seen_at ? "healthy" : "offline"}>● {c.last_seen_at ? "Online" : "Waiting"}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="detail-note">Download the Klown Connector, run it on the SambaPOS PC, and it links itself with this token. Read-only until you enable auto-close.</div>
             </section>
           </div>
         </div>
