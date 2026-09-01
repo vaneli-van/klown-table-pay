@@ -45,6 +45,8 @@ export default function BrandingEditor({
   const { data, isLoading, error } = useQuery({
     queryKey: ["restaurant_branding", restaurantId],
     enabled: !!restaurantId,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
     queryFn: async (): Promise<Branding> => {
       const { data, error } = await supabase
         .from("restaurants")
@@ -56,7 +58,13 @@ export default function BrandingEditor({
     },
   });
 
-  useEffect(() => { if (data) setForm(data); }, [data]);
+  const loadedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (data && loadedFor.current !== restaurantId) {
+      setForm(data);
+      loadedFor.current = restaurantId;
+    }
+  }, [data, restaurantId]);
 
   const set = <K extends keyof Branding>(k: K, v: Branding[K]) => setForm((f) => ({ ...f, [k]: v }));
 
