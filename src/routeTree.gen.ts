@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminActivityLogRouteImport } from './routes/admin.activity-log'
 import { Route as AdminBillsPaymentsRouteImport } from './routes/admin.bills-payments'
+import { Route as AdminBrandingRouteImport } from './routes/admin.branding'
 import { Route as AdminMembersRouteImport } from './routes/admin.members'
 import { Route as AdminMenusRouteImport } from './routes/admin.menus'
 import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
@@ -46,6 +47,11 @@ const AdminActivityLogRoute = AdminActivityLogRouteImport.update({
 const AdminBillsPaymentsRoute = AdminBillsPaymentsRouteImport.update({
   id: '/admin/bills-payments',
   path: '/admin/bills-payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminBrandingRoute = AdminBrandingRouteImport.update({
+  id: '/admin/branding',
+  path: '/admin/branding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminMembersRoute = AdminMembersRouteImport.update({
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin/activity-log': typeof AdminActivityLogRoute
   '/admin/bills-payments': typeof AdminBillsPaymentsRoute
+  '/admin/branding': typeof AdminBrandingRoute
   '/admin/members': typeof AdminMembersRoute
   '/admin/menus': typeof AdminMenusRoute
   '/admin/notifications': typeof AdminNotificationsRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin/activity-log': typeof AdminActivityLogRoute
   '/admin/bills-payments': typeof AdminBillsPaymentsRoute
+  '/admin/branding': typeof AdminBrandingRoute
   '/admin/members': typeof AdminMembersRoute
   '/admin/menus': typeof AdminMenusRoute
   '/admin/notifications': typeof AdminNotificationsRoute
@@ -164,6 +172,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin/activity-log': typeof AdminActivityLogRoute
   '/admin/bills-payments': typeof AdminBillsPaymentsRoute
+  '/admin/branding': typeof AdminBrandingRoute
   '/admin/members': typeof AdminMembersRoute
   '/admin/menus': typeof AdminMenusRoute
   '/admin/notifications': typeof AdminNotificationsRoute
@@ -186,6 +195,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin/activity-log'
     | '/admin/bills-payments'
+    | '/admin/branding'
     | '/admin/members'
     | '/admin/menus'
     | '/admin/notifications'
@@ -206,6 +216,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin/activity-log'
     | '/admin/bills-payments'
+    | '/admin/branding'
     | '/admin/members'
     | '/admin/menus'
     | '/admin/notifications'
@@ -226,6 +237,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin/activity-log'
     | '/admin/bills-payments'
+    | '/admin/branding'
     | '/admin/members'
     | '/admin/menus'
     | '/admin/notifications'
@@ -247,6 +259,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminActivityLogRoute: typeof AdminActivityLogRoute
   AdminBillsPaymentsRoute: typeof AdminBillsPaymentsRoute
+  AdminBrandingRoute: typeof AdminBrandingRoute
   AdminMembersRoute: typeof AdminMembersRoute
   AdminMenusRoute: typeof AdminMenusRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
@@ -292,6 +305,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/bills-payments'
       fullPath: '/admin/bills-payments'
       preLoaderRoute: typeof AdminBillsPaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/branding': {
+      id: '/admin/branding'
+      path: '/admin/branding'
+      fullPath: '/admin/branding'
+      preLoaderRoute: typeof AdminBrandingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/members': {
@@ -399,6 +419,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminActivityLogRoute: AdminActivityLogRoute,
   AdminBillsPaymentsRoute: AdminBillsPaymentsRoute,
+  AdminBrandingRoute: AdminBrandingRoute,
   AdminMembersRoute: AdminMembersRoute,
   AdminMenusRoute: AdminMenusRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
