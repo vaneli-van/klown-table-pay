@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import OwnerLayout, { useOwner } from "@/components/OwnerLayout";
 import { useEscape } from "@/components/prototype";
 import {
-  studioMenuGet, studioMenuUpdate,
+  studioMenuGet, studioMenuUpdate, studioMenuPublish, studioMenuUnpublish,
   studioSectionUpsert, studioSectionDelete, studioSectionsReorder,
   studioItemUpsert, studioItemDelete, studioItemDuplicate, studioItemsReorder,
   studioCatalogueList, studioCatalogueUpsert, studioPlaceCatalogueItem, studioImportPos,
@@ -84,7 +84,7 @@ function EditorBody({ menuId }: { menuId: string }) {
 
   // ---- menu-level ----
   const onName = (v: string) => { if (tree && v.trim() && v !== tree.menu.name) run(studioMenuUpdate(menuId, { name: v.trim() })); };
-  const toggleStatus = () => { if (tree) run(studioMenuUpdate(menuId, { status: tree.menu.status === "live" ? "draft" : "live" }), { ok: tree.menu.status === "live" ? "Set to draft" : "Menu is live" }); };
+  const toggleStatus = () => { if (!tree) return; if (tree.menu.status === "live") run(studioMenuUnpublish(menuId), { ok: "Unpublished \u2014 back to draft" }); else run(studioMenuPublish(menuId), { ok: "Published \u2014 diners now see this menu" }); };
 
   // ---- sections ----
   const moveSection = (idx: number, dir: -1 | 1) => {
@@ -157,7 +157,7 @@ function EditorBody({ menuId }: { menuId: string }) {
       <div className="st-toolbar">
         <Link className="quiet" to="/owner/menus">← Menus</Link>
         <input className="st-name-input" key={tree.menu.id} defaultValue={tree.menu.name} onBlur={(e) => onName(e.target.value)} aria-label="Menu name" />
-        <span className={"st-badge " + (tree.menu.status === "live" ? "live" : "")} onClick={toggleStatus} style={{ cursor: "pointer" }} title="Click to toggle">{tree.menu.status === "live" ? "Live" : "Draft"}</span>
+        <span className={"st-badge " + (tree.menu.status === "live" ? "live" : "")} onClick={toggleStatus} style={{ cursor: "pointer" }} title="Click to publish / unpublish">{tree.menu.status === "live" ? "Live" : "Draft"}</span>
         {tree.menu.source === "pos" && <span className="st-badge pos">POS</span>}
         <span className="st-spacer" />
         <span className={"st-save-status " + (saving > 0 ? "saving" : "")}>{savingText}</span>

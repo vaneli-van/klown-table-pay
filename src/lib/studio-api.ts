@@ -295,3 +295,7 @@ export async function studioImportPos(menuId: string): Promise<{ ok: true; secti
   }
   return j;
 }
+
+// ---- publish ------------------------------------------------------------
+export const studioMenuPublish = (menuId: string) => rpc<StudioTree>("studio_menu_publish", { p_menu_id: menuId });
+export const studioMenuUnpublish = (menuId: string) => rpc<StudioTree>("studio_menu_unpublish", { p_menu_id: menuId });
