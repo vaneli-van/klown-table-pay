@@ -278,3 +278,20 @@ export async function uploadStudioImage(restaurantId: string, file: File): Promi
   if (error) throw error;
   return supabase.storage.from("branding").getPublicUrl(path).data.publicUrl;
 }
+
+// ---- POS import (calls the diner-app endpoint that reaches Odoo) ---------
+const DINER_API = "https://kozo-pay-guest-app.lovable.app";
+export async function studioImportPos(menuId: string): Promise<{ ok: true; sections_added: number; items_added: number; skipped: number; total_products: number }> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) throw new Error("Not signed in");
+  const res = await fetch(`${DINER_API}/api/studio/import-pos`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, menuId }),
+  });
+  const j = await res.json().catch(() => null);
+  if (!res.ok || !j?.ok) {
+    const reason = j?.reason;
+    throw new Error(reason === "no_pos" ? "This restaurant has no active POS connection yet." : (j?.message || reason || "Import failed"));
+  }
+  return j;
+}

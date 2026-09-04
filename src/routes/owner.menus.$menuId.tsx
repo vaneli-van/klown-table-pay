@@ -7,7 +7,7 @@ import {
   studioMenuGet, studioMenuUpdate,
   studioSectionUpsert, studioSectionDelete, studioSectionsReorder,
   studioItemUpsert, studioItemDelete, studioItemDuplicate, studioItemsReorder,
-  studioCatalogueList, studioCatalogueUpsert, studioPlaceCatalogueItem,
+  studioCatalogueList, studioCatalogueUpsert, studioPlaceCatalogueItem, studioImportPos,
   studioRevisionSave, studioRevisionsList, studioRevisionRestore,
   studioThemeSave, studioThemeReset, uploadStudioImage,
   THEME_TEMPLATES, DEFAULT_TOKENS, FONT_OPTIONS, mergeTokens, studioFontLinkHref,
@@ -113,6 +113,20 @@ function EditorBody({ menuId }: { menuId: string }) {
     run(studioPlaceCatalogueItem(sectionId, catId), { ok: "Added to menu" });
   };
   const refreshCatalogue = async () => { try { setCatalogue(await studioCatalogueList()); } catch { /* noop */ } };
+  const importPos = async () => {
+    if (!window.confirm("Import items from your POS into this menu? Existing items stay; new POS items are added, grouped by category.")) return;
+    setSaving((n) => n + 1);
+    try {
+      const r = await studioImportPos(menuId);
+      setTree(await studioMenuGet(menuId));
+      setCatalogue(await studioCatalogueList());
+      show(`Imported ${r.items_added} item${r.items_added === 1 ? "" : "s"} across ${r.sections_added} section${r.sections_added === 1 ? "" : "s"}` + (r.skipped ? ` \u00b7 ${r.skipped} already present` : ""));
+    } catch (e: any) {
+      show("Import failed: " + (e?.message ?? "error"));
+    } finally {
+      setSaving((n) => n - 1);
+    }
+  };
 
   // ---- history ----
   const openHistory = async () => {
@@ -147,6 +161,7 @@ function EditorBody({ menuId }: { menuId: string }) {
         {tree.menu.source === "pos" && <span className="st-badge pos">POS</span>}
         <span className="st-spacer" />
         <span className={"st-save-status " + (saving > 0 ? "saving" : "")}>{savingText}</span>
+        <button className="outline-button" onClick={importPos}>Import from POS</button>
         <button className="outline-button" onClick={() => setThemeOpen(true)}>Theme</button>
         <button className="outline-button" onClick={saveVersion}>Save version</button>
         <button className="outline-button" onClick={openHistory}>History</button>
