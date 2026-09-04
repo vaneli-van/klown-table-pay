@@ -103,3 +103,25 @@
 .st-tp-row{display:flex;align-items:baseline;gap:8px;font-size:14px}
 .st-tp-dots{flex:1;border-bottom:1px dotted currentColor;opacity:.4;transform:translateY(-3px)}
 .st-tp-desc{font-size:12px;opacity:.7;margin-top:2px}
+
+/* drag handles + drop indicator */
+.st-drag-handle{cursor:grab;color:#cfc9bd;user-select:none;font-size:13px;line-height:1;letter-spacing:-2px;padding-right:2px}
+.st-drag-handle:active{cursor:grabbing}
+.st-item-row.drop-before{box-shadow:inset 0 3px 0 -1px #c8a56b}
+
+/* item modifiers */
+.st-mods{border-top:1px solid #e6e1d6;margin-top:14px;padding-top:12px}
+.st-mods-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.st-mod-group{border:1px solid #e6e1d6;border-radius:8px;background:#fbfaf7;padding:10px;margin-top:10px}
+.st-mod-group-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.st-mod-gname{flex:1;min-width:150px;font-weight:600}
+.st-mod-minmax{display:flex;gap:8px}
+.st-mod-minmax label{display:flex;align-items:center;gap:4px;font-size:12px;color:#77736c}
+.st-mod-minmax select{padding:2px 4px}
+.st-mod-list{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.st-mod-row{display:flex;align-items:center;gap:8px}
+.st-mod-name{flex:1;min-width:0}
+.st-mod-price{display:flex;align-items:center;gap:3px;white-space:nowrap}
+.st-mod-price input{width:64px}
+.st-mod-price small{color:#77736c;font-size:11px}
+.st-mod-add{align-self:flex-start;color:#c8a56b;padding-left:0}

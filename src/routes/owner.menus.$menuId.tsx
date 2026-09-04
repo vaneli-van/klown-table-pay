@@ -6,13 +6,14 @@ import { useEscape } from "@/components/prototype";
 import {
   studioMenuGet, studioMenuUpdate, studioMenuPublish, studioMenuUnpublish,
   studioSectionUpsert, studioSectionDelete, studioSectionsReorder,
-  studioItemUpsert, studioItemDelete, studioItemDuplicate, studioItemsReorder,
+  studioItemUpsert, studioItemDelete, studioItemDuplicate, studioItemsReorder, studioItemMove,
   studioCatalogueList, studioCatalogueUpsert, studioPlaceCatalogueItem, studioImportPos,
   studioRevisionSave, studioRevisionsList, studioRevisionRestore,
+  studioModifierGroupUpsert, studioModifierGroupDelete, studioModifierUpsert, studioModifierDelete,
   studioThemeSave, studioThemeReset, studioDigitalSave, uploadStudioImage,
   THEME_TEMPLATES, DEFAULT_TOKENS, FONT_OPTIONS, mergeTokens, studioFontLinkHref,
   priceText, parsePrice,
-  type StudioTree, type StudioSection, type StudioItem, type CatalogueItem, type RevisionRow, type ThemeTokens,
+  type StudioTree, type StudioSection, type StudioItem, type CatalogueItem, type RevisionRow, type ThemeTokens, type ModifierGroup, type Modifier,
 } from "@/lib/studio-api";
 import { relTime } from "@/lib/owner-api";
 import "../owner-studio.css";
@@ -35,6 +36,7 @@ const SECTION_TYPES = ["Title", "Standard", "Alternate", "Alternate 2", "Subhead
 
 type ItemDialogState = { open: boolean; sectionId: string | null; item: StudioItem | null; catalogue: boolean };
 type SectionDialogState = { open: boolean; section: StudioSection | null };
+type DragState = { kind: "cat"; id: string } | { kind: "item"; id: string; from: string } | { kind: "section"; id: string };
 
 function EditorBody({ menuId }: { menuId: string }) {
   const { show } = useOwner();
@@ -48,8 +50,8 @@ function EditorBody({ menuId }: { menuId: string }) {
   const [pageOpen, setPageOpen] = useState(false);
   const [revisions, setRevisions] = useState<RevisionRow[]>([]);
   const [catSearch, setCatSearch] = useState("");
-  const [dragCat, setDragCat] = useState<string | null>(null);
-  const [dragOver, setDragOver] = useState<string | null>(null);
+  const [drag, setDrag] = useState<DragState | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ section: string; item: string | null } | null>(null);
   const loadedFor = useRef<string | null>(null);
 
   const { isLoading, error } = useQuery({
@@ -107,11 +109,28 @@ function EditorBody({ menuId }: { menuId: string }) {
   const deleteItem = (it: StudioItem) => { if (window.confirm(`Remove "${it.name}" from this menu?`)) run(studioItemDelete(it.id)); };
 
   // ---- catalogue drag/drop ----
-  const onDropOnSection = (sectionId: string) => {
-    setDragOver(null);
-    const catId = dragCat; setDragCat(null);
-    if (!catId) return;
-    run(studioPlaceCatalogueItem(sectionId, catId), { ok: "Added to menu" });
+  const applyDrop = (targetSectionId: string, targetIndex: number | null) => {
+    const d = drag; setDrag(null); setDropTarget(null);
+    if (!d) return;
+    const target = sections.find((s) => s.id === targetSectionId);
+    if (!target) return;
+    if (d.kind === "cat") {
+      run(studioPlaceCatalogueItem(targetSectionId, d.id), { ok: "Added to menu" });
+    } else if (d.kind === "item") {
+      const idx = targetIndex ?? target.items.length;
+      if (d.from === targetSectionId) {
+        const ids = target.items.map((i) => i.id).filter((id) => id !== d.id);
+        ids.splice(Math.min(idx, ids.length), 0, d.id);
+        run(studioItemsReorder(targetSectionId, ids));
+      } else {
+        run(studioItemMove(d.id, targetSectionId, idx));
+      }
+    } else if (d.kind === "section") {
+      const targetIdx = sections.findIndex((s) => s.id === targetSectionId);
+      const ids = sections.map((s) => s.id).filter((id) => id !== d.id);
+      ids.splice(Math.max(0, Math.min(targetIdx, ids.length)), 0, d.id);
+      run(studioSectionsReorder(menuId, ids));
+    }
   };
   const refreshCatalogue = async () => { try { setCatalogue(await studioCatalogueList()); } catch { /* noop */ } };
   const importPos = async () => {
@@ -179,7 +198,7 @@ function EditorBody({ menuId }: { menuId: string }) {
           {filteredCat.length === 0 ? (
             <div className="st-cat-empty">{catSearch ? "No matches." : "No saved items yet. Create one, or add items directly to a section."}</div>
           ) : filteredCat.map((c) => (
-            <div className="st-cat-item" key={c.id} draggable onDragStart={() => setDragCat(c.id)} onDragEnd={() => setDragCat(null)} title="Drag onto a section">
+            <div className="st-cat-item" key={c.id} draggable onDragStart={() => setDrag({ kind: "cat", id: c.id })} onDragEnd={() => { setDrag(null); setDropTarget(null); }} title="Drag onto a section">
               <span className="st-drag">⋮⋮</span>
               <strong>{c.name}</strong>
               <small>{priceText(c.price_pesewas, c.price_display, currency)}</small>
@@ -195,12 +214,12 @@ function EditorBody({ menuId }: { menuId: string }) {
           {sections.map((s, si) => (
             <section
               key={s.id}
-              className={"st-section" + (dragOver === s.id ? " dragover" : "")}
-              onDragOver={(e) => { if (dragCat) { e.preventDefault(); setDragOver(s.id); } }}
-              onDragLeave={() => setDragOver((v) => (v === s.id ? null : v))}
-              onDrop={(e) => { e.preventDefault(); onDropOnSection(s.id); }}
+              className={"st-section" + (drag && dropTarget?.section === s.id && dropTarget?.item === null ? " dragover" : "")}
+              onDragOver={(e) => { if (drag) { e.preventDefault(); setDropTarget({ section: s.id, item: null }); } }}
+              onDrop={(e) => { if (drag) { e.preventDefault(); applyDrop(s.id, null); } }}
             >
               <div className="st-section-head">
+                <span className="st-drag-handle" draggable onDragStart={(e) => { e.stopPropagation(); setDrag({ kind: "section", id: s.id }); }} onDragEnd={() => { setDrag(null); setDropTarget(null); }} title="Drag to reorder section">⋮⋮</span>
                 <h3>{s.name || "Untitled section"}</h3>
                 <span className="st-section-type">{s.type}{!s.visible ? " · hidden" : ""}</span>
                 <div className="st-row-actions">
@@ -213,7 +232,13 @@ function EditorBody({ menuId }: { menuId: string }) {
               <div className="st-section-body">
                 {s.items.length === 0 && <div className="st-section-empty">Drag a food item here, or add one.</div>}
                 {s.items.map((it, ii) => (
-                  <div className={"st-item-row" + (!it.available || it.sold_out ? " dim" : "")} key={it.id}>
+                  <div
+                    className={"st-item-row" + (!it.available || it.sold_out ? " dim" : "") + (drag && drag.kind !== "section" && dropTarget?.item === it.id ? " drop-before" : "")}
+                    key={it.id}
+                    onDragOver={(e) => { if (drag && drag.kind !== "section") { e.preventDefault(); e.stopPropagation(); setDropTarget({ section: s.id, item: it.id }); } }}
+                    onDrop={(e) => { if (drag && drag.kind !== "section") { e.preventDefault(); e.stopPropagation(); applyDrop(s.id, ii); } }}
+                  >
+                    <span className="st-drag-handle" draggable onDragStart={(e) => { e.stopPropagation(); setDrag({ kind: "item", id: it.id, from: s.id }); }} onDragEnd={() => { setDrag(null); setDropTarget(null); }} title="Drag to reorder or move to another section">⋮⋮</span>
                     <div className="st-item-main">
                       <div className="st-item-name">{it.name}{it.sold_out && <span className="st-soldout"> · Sold out</span>}</div>
                       {it.description && <div className="st-item-desc">{it.description}</div>}
@@ -361,6 +386,7 @@ function ItemDialog({ state, currency, onClose, onSaved, run }: {
             <label className="st-check"><input type="checkbox" checked={visible} onChange={(e) => setVisible(e.target.checked)} /> Visible</label>
           </div>
         )}
+        {it && !state.catalogue && <ItemModifiers itemId={it.id} currency={currency} run={run} initial={it.modifier_groups ?? []} />}
         <div className="st-dialog-actions">
           <span className="st-spacer" />
           <button className="quiet" onClick={onClose}>Cancel</button>
@@ -638,6 +664,62 @@ function PageDialog({ tree, onClose, onSaved, run }: {
           <button className="gold-button" onClick={save} disabled={!!busy}>{busy ? "Uploading…" : "Save page"}</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ---------- Item modifiers (options / add-ons) ----------
+function ItemModifiers({ itemId, currency, run, initial }: {
+  itemId: string; currency: string;
+  run: <T>(p: Promise<T>, opts?: { tree?: boolean; ok?: string }) => Promise<T | undefined>;
+  initial: ModifierGroup[];
+}) {
+  const [groups, setGroups] = useState<ModifierGroup[]>(initial);
+  const sync = (t: StudioTree | undefined) => {
+    if (!t) return;
+    const fresh = t.sections.flatMap((s) => s.items).find((i) => i.id === itemId);
+    setGroups(fresh?.modifier_groups ?? []);
+  };
+  const addGroup = async () => sync(await run(studioModifierGroupUpsert(itemId, { name: "Options", required: false, min_select: 0, max_select: 1 }), { ok: "Option group added" }) as any);
+  const saveGroup = async (g: ModifierGroup, patch: Record<string, unknown>) => sync(await run(studioModifierGroupUpsert(itemId, { id: g.id, ...patch })) as any);
+  const delGroup = async (g: ModifierGroup) => { if (!window.confirm(`Delete option group "${g.name || "Untitled"}"?`)) return; sync(await run(studioModifierGroupDelete(g.id), { ok: "Group removed" }) as any); };
+  const addMod = async (g: ModifierGroup) => sync(await run(studioModifierUpsert(g.id, { name: "New option", price_pesewas: 0, available: true })) as any);
+  const saveMod = async (g: ModifierGroup, m: Modifier, patch: Record<string, unknown>) => sync(await run(studioModifierUpsert(g.id, { id: m.id, ...patch })) as any);
+  const delMod = async (m: Modifier) => sync(await run(studioModifierDelete(m.id)) as any);
+  const cedis = (p: number) => String((p || 0) / 100);
+  const toPesewas = (v: string) => Math.max(0, Math.round((parseFloat(v) || 0) * 100));
+
+  return (
+    <div className="st-mods">
+      <div className="st-mods-head">
+        <label className="st-tsub" style={{ margin: 0 }}>Options &amp; add-ons</label>
+        <button type="button" className="outline-button" onClick={addGroup}>＋ Add option group</button>
+      </div>
+      {groups.length === 0 && <p style={{ fontSize: 12, color: "#a29d93", margin: "4px 0 0" }}>No options yet. Add a group like “Size”, “Protein” or “Extras”, then list the choices under it.</p>}
+      {groups.map((g) => (
+        <div className="st-mod-group" key={g.id}>
+          <div className="st-mod-group-head">
+            <input className="st-mod-gname" defaultValue={g.name} placeholder="Group name (e.g. Size)" onBlur={(e) => { if (e.target.value.trim() !== g.name) saveGroup(g, { name: e.target.value.trim() }); }} />
+            <label className="st-check"><input type="checkbox" checked={g.required} onChange={(e) => saveGroup(g, { required: e.target.checked })} /> Required</label>
+            <span className="st-mod-minmax">
+              <label>Min<select value={g.min_select} onChange={(e) => saveGroup(g, { min_select: Number(e.target.value) })}>{[0, 1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}</select></label>
+              <label>Max<select value={g.max_select} onChange={(e) => saveGroup(g, { max_select: Number(e.target.value) })}>{[1, 2, 3, 4, 5, 6, 8, 10].map((n) => <option key={n} value={n}>{n}</option>)}</select></label>
+            </span>
+            <button type="button" className="st-icon-btn" title="Delete group" onClick={() => delGroup(g)}>🗑</button>
+          </div>
+          <div className="st-mod-list">
+            {g.modifiers.map((m) => (
+              <div className="st-mod-row" key={m.id}>
+                <input className="st-mod-name" defaultValue={m.name} placeholder="Option name" onBlur={(e) => { if (e.target.value.trim() !== m.name) saveMod(g, m, { name: e.target.value.trim() }); }} />
+                <span className="st-mod-price"><small>{currency === "GHS" ? "GH₵" : ""}</small><input defaultValue={cedis(m.price_pesewas)} inputMode="decimal" placeholder="0" onBlur={(e) => { const px = toPesewas(e.target.value); if (px !== m.price_pesewas) saveMod(g, m, { price_pesewas: px }); }} /></span>
+                <label className="st-check" title="Available"><input type="checkbox" checked={m.available} onChange={(e) => saveMod(g, m, { available: e.target.checked })} /></label>
+                <button type="button" className="st-icon-btn" title="Delete option" onClick={() => delMod(m)}>✕</button>
+              </div>
+            ))}
+            <button type="button" className="quiet st-mod-add" onClick={() => addMod(g)}>＋ Add option</button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
