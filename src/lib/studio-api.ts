@@ -299,3 +299,7 @@ export async function studioImportPos(menuId: string): Promise<{ ok: true; secti
 // ---- publish ------------------------------------------------------------
 export const studioMenuPublish = (menuId: string) => rpc<StudioTree>("studio_menu_publish", { p_menu_id: menuId });
 export const studioMenuUnpublish = (menuId: string) => rpc<StudioTree>("studio_menu_unpublish", { p_menu_id: menuId });
+
+// ---- digital / page settings -------------------------------------------
+export const studioDigitalSave = (menuId: string, patch: Record<string, any>) =>
+  rpc<StudioTree>("studio_digital_save", { p_menu_id: menuId, p_patch: patch });

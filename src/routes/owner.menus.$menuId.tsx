@@ -9,7 +9,7 @@ import {
   studioItemUpsert, studioItemDelete, studioItemDuplicate, studioItemsReorder,
   studioCatalogueList, studioCatalogueUpsert, studioPlaceCatalogueItem, studioImportPos,
   studioRevisionSave, studioRevisionsList, studioRevisionRestore,
-  studioThemeSave, studioThemeReset, uploadStudioImage,
+  studioThemeSave, studioThemeReset, studioDigitalSave, uploadStudioImage,
   THEME_TEMPLATES, DEFAULT_TOKENS, FONT_OPTIONS, mergeTokens, studioFontLinkHref,
   priceText, parsePrice,
   type StudioTree, type StudioSection, type StudioItem, type CatalogueItem, type RevisionRow, type ThemeTokens,
@@ -45,6 +45,7 @@ function EditorBody({ menuId }: { menuId: string }) {
   const [sectionDlg, setSectionDlg] = useState<SectionDialogState>({ open: false, section: null });
   const [historyOpen, setHistoryOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
+  const [pageOpen, setPageOpen] = useState(false);
   const [revisions, setRevisions] = useState<RevisionRow[]>([]);
   const [catSearch, setCatSearch] = useState("");
   const [dragCat, setDragCat] = useState<string | null>(null);
@@ -162,6 +163,7 @@ function EditorBody({ menuId }: { menuId: string }) {
         <span className="st-spacer" />
         <span className={"st-save-status " + (saving > 0 ? "saving" : "")}>{savingText}</span>
         <button className="outline-button" onClick={importPos}>Import from POS</button>
+        <button className="outline-button" onClick={() => setPageOpen(true)}>Page</button>
         <button className="outline-button" onClick={() => setThemeOpen(true)}>Theme</button>
         <button className="outline-button" onClick={saveVersion}>Save version</button>
         <button className="outline-button" onClick={openHistory}>History</button>
@@ -276,6 +278,9 @@ function EditorBody({ menuId }: { menuId: string }) {
       )}
       {themeOpen && (
         <ThemeDialog tree={tree} onClose={() => setThemeOpen(false)} onSaved={(t) => { if (t) setTree(t); }} run={run} />
+      )}
+      {pageOpen && (
+        <PageDialog tree={tree} onClose={() => setPageOpen(false)} onSaved={(t) => { if (t) setTree(t); }} run={run} />
       )}
     </>
   );
@@ -537,6 +542,100 @@ function ThemeDialog({ tree, onClose, onSaved, run }: {
           <span className="st-spacer" />
           <button className="quiet" onClick={onClose}>Cancel</button>
           <button className="gold-button" onClick={save}>Save theme</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Page (digital header) dialog ----------
+function PageDialog({ tree, onClose, onSaved, run }: {
+  tree: StudioTree; onClose: () => void;
+  onSaved: (tree: StudioTree | undefined) => void;
+  run: <T>(p: Promise<T>, opts?: { tree?: boolean; ok?: string }) => Promise<T | undefined>;
+}) {
+  useEscape(onClose);
+  const { restaurantId, show } = useOwner();
+  const d: any = tree.digital ?? {};
+  const [bizName, setBizName] = useState<string>(d.biz_name ?? "");
+  const [phone, setPhone] = useState<string>(d.phone ?? "");
+  const [info, setInfo] = useState<string>(d.info ?? "");
+  const [linkUrl, setLinkUrl] = useState<string>(d.link_url ?? "");
+  const [linkText, setLinkText] = useState<string>(d.link_text ?? "");
+  const [welcomeAlert, setWelcomeAlert] = useState<string>(d.welcome_alert ?? "");
+  const [bannerBg, setBannerBg] = useState<string>(d.banner_bg || "#c8a56b");
+  const [logoUrl, setLogoUrl] = useState<string>(d.logo_url ?? "");
+  const [bannerUrl, setBannerUrl] = useState<string>(d.banner_url ?? "");
+  const [busy, setBusy] = useState<null | "logo" | "banner">(null);
+
+  const upload = async (kind: "logo" | "banner", file: File | undefined) => {
+    if (!file) return;
+    setBusy(kind);
+    try {
+      const url = await uploadStudioImage(restaurantId, file);
+      if (kind === "logo") setLogoUrl(url); else setBannerUrl(url);
+    } catch (e: any) { show("Upload failed: " + (e?.message ?? "error")); }
+    finally { setBusy(null); }
+  };
+
+  const save = async () => {
+    const t = await run(studioDigitalSave(tree.menu.id, {
+      biz_name: bizName.trim(), phone: phone.trim(), info: info.trim(),
+      link_url: linkUrl.trim(), link_text: linkText.trim(),
+      welcome_alert: welcomeAlert.trim(), banner_bg: bannerBg,
+      logo_url: logoUrl, banner_url: bannerUrl,
+    }), { ok: "Page saved" });
+    onSaved(t as any);
+  };
+
+  return (
+    <div className="st-dialog-back" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="st-dialog">
+        <h3>Page · {tree.menu.name}</h3>
+        <p style={{ fontSize: 12, color: "#a29d93", marginTop: -4 }}>Controls the header diners see above the menu. This does not change the payment or bill screens.</p>
+
+        <label className="st-tsub">Announcement bar</label>
+        <div className="st-field">
+          <label>Welcome message (leave blank to hide)</label>
+          <input value={welcomeAlert} onChange={(e) => setWelcomeAlert(e.target.value)} placeholder="e.g. Happy hour 5–7pm · 2-for-1 cocktails" />
+        </div>
+        <div className="st-colour-row">
+          <span>Bar colour</span>
+          <input type="color" value={bannerBg} onChange={(e) => setBannerBg(e.target.value)} aria-label="Bar colour" />
+          <input className="st-colour-hex" value={bannerBg} onChange={(e) => setBannerBg(e.target.value)} />
+        </div>
+
+        <label className="st-tsub">Business</label>
+        <div className="st-two">
+          <div className="st-field"><label>Business name</label><input value={bizName} onChange={(e) => setBizName(e.target.value)} placeholder={tree.menu.name} /></div>
+          <div className="st-field"><label>Phone</label><input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+233 …" /></div>
+        </div>
+        <div className="st-field"><label>Info line</label><input value={info} onChange={(e) => setInfo(e.target.value)} placeholder="e.g. Open daily 11am–11pm · Osu, Accra" /></div>
+        <div className="st-two">
+          <div className="st-field"><label>Link URL</label><input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://…" /></div>
+          <div className="st-field"><label>Link text</label><input value={linkText} onChange={(e) => setLinkText(e.target.value)} placeholder="e.g. Visit website" /></div>
+        </div>
+
+        <label className="st-tsub">Images</label>
+        <div className="st-two">
+          <div className="st-field">
+            <label>Logo</label>
+            {logoUrl && <img src={logoUrl} alt="" style={{ height: 44, width: "auto", borderRadius: 6, marginBottom: 6, background: "#fff", padding: 4 }} />}
+            <input type="file" accept="image/*" onChange={(e) => upload("logo", e.target.files?.[0])} disabled={busy === "logo"} />
+            {logoUrl && <button className="quiet" style={{ color: "#b0553f", marginTop: 4 }} onClick={() => setLogoUrl("")}>Remove logo</button>}
+          </div>
+          <div className="st-field">
+            <label>Banner</label>
+            {bannerUrl && <img src={bannerUrl} alt="" style={{ height: 44, width: "100%", objectFit: "cover", borderRadius: 6, marginBottom: 6 }} />}
+            <input type="file" accept="image/*" onChange={(e) => upload("banner", e.target.files?.[0])} disabled={busy === "banner"} />
+            {bannerUrl && <button className="quiet" style={{ color: "#b0553f", marginTop: 4 }} onClick={() => setBannerUrl("")}>Remove banner</button>}
+          </div>
+        </div>
+
+        <div className="st-dialog-actions">
+          <span className="st-spacer" />
+          <button className="quiet" onClick={onClose}>Cancel</button>
+          <button className="gold-button" onClick={save} disabled={!!busy}>{busy ? "Uploading…" : "Save page"}</button>
         </div>
       </div>
     </div>
