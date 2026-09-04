@@ -1,0 +1,82 @@
+/* Menu Studio — additive styles over owner.css / styles.css. Prefix: st-* */
+.st-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.st-toolbar .st-name-input{font:600 20px/1.2 "Helvetica Neue",Arial,sans-serif;border:1px solid transparent;background:transparent;padding:4px 6px;color:#171717;min-width:220px;border-radius:2px}
+.st-toolbar .st-name-input:hover{border-color:#e6e1d6}
+.st-toolbar .st-name-input:focus{outline:none;border-color:#c8a56b;background:#fff}
+.st-spacer{flex:1}
+.st-save-status{font-size:12px;color:#8a857c;min-width:70px;text-align:right}
+.st-save-status.saving{color:#c8a56b}
+
+.st-badge{display:inline-block;font:700 9px/1 Arial;letter-spacing:.12em;text-transform:uppercase;padding:5px 8px;border-radius:2px;border:1px solid #e6e1d6;color:#77736c;background:#f3f0e9}
+.st-badge.live{color:#3f6f4f;border-color:#c3dccb;background:#eef5f0}
+.st-badge.pos{color:#8a5a2b;border-color:#e7d3bd;background:#f7efe4}
+
+/* menu list */
+.st-menus-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.st-menu-card{background:#fbfaf7;border:1px solid #e6e1d6;border-radius:3px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.st-menu-card h3{margin:0;font:600 17px/1.25 "Helvetica Neue",Arial}
+.st-menu-card .st-meta{font-size:12px;color:#8a857c}
+.st-menu-card .st-card-actions{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+.st-menu-card .st-badges{display:flex;gap:6px}
+
+/* editor split */
+.st-editor{display:grid;grid-template-columns:270px 1fr;gap:16px;align-items:start}
+@media(max-width:860px){.st-editor{grid-template-columns:1fr}}
+.st-rail{background:#fbfaf7;border:1px solid #e6e1d6;border-radius:3px;padding:14px;position:sticky;top:12px;max-height:calc(100vh - 130px);overflow:auto}
+.st-rail h4{margin:0 0 4px;font:700 10px/1 Arial;letter-spacing:.14em;text-transform:uppercase;color:#77736c}
+.st-rail .st-rail-hint{font-size:11px;color:#a29d93;margin:0 0 12px}
+.st-rail-search{width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #e6e1d6;border-radius:2px;font-size:13px;margin-bottom:10px;background:#fff}
+.st-cat-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid #ece7dd;border-radius:2px;background:#fff;margin-bottom:7px;cursor:grab;font-size:13px}
+.st-cat-item:active{cursor:grabbing}
+.st-cat-item .st-drag{color:#c3bdb0;font-size:14px;line-height:1}
+.st-cat-item strong{font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-cat-item small{color:#8a857c}
+.st-cat-empty{font-size:12px;color:#a29d93;padding:8px 0}
+
+/* canvas */
+.st-canvas{display:flex;flex-direction:column;gap:14px;min-height:200px}
+.st-section{background:#fbfaf7;border:1px solid #e6e1d6;border-radius:3px;overflow:hidden}
+.st-section.dragover{border-color:#c8a56b;box-shadow:0 0 0 2px #eeddc3 inset}
+.st-section-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #ece7dd;background:#f6f3ec}
+.st-section-head h3{margin:0;font:600 16px/1.2 "Helvetica Neue",Arial;flex:1}
+.st-section-head .st-section-type{font:700 9px/1 Arial;letter-spacing:.1em;text-transform:uppercase;color:#a29d93}
+.st-section-body{padding:6px 14px 12px}
+.st-item-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #f0ece3}
+.st-item-row:last-child{border-bottom:0}
+.st-item-row.dim{opacity:.5}
+.st-item-main{flex:1;min-width:0}
+.st-item-main .st-item-name{font-weight:600;font-size:14px}
+.st-item-main .st-item-desc{font-size:12px;color:#8a857c;margin-top:2px}
+.st-item-price{font-size:13px;font-weight:600;white-space:nowrap}
+.st-item-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+.st-tag{font:600 9px/1 Arial;letter-spacing:.06em;text-transform:uppercase;color:#8a5a2b;background:#f7efe4;border-radius:2px;padding:3px 6px}
+.st-soldout{color:#b0553f}
+.st-row-actions{display:flex;gap:4px;align-items:center}
+.st-icon-btn{border:1px solid #e6e1d6;background:#fff;border-radius:2px;width:28px;height:28px;display:grid;place-items:center;cursor:pointer;font-size:13px;color:#77736c;padding:0}
+.st-icon-btn:hover{border-color:#c8a56b;color:#171717}
+.st-icon-btn:disabled{opacity:.4;cursor:default}
+.st-section-empty{font-size:12px;color:#a29d93;padding:14px 0;text-align:center;border:1px dashed #e0dacd;border-radius:2px;margin:8px 0}
+
+.st-add-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+
+/* dialog */
+.st-dialog-back{position:fixed;inset:0;background:rgba(23,23,23,.42);display:grid;place-items:center;z-index:60;padding:16px}
+.st-dialog{background:#fbfaf7;border:1px solid #e6e1d6;border-radius:4px;width:min(560px,100%);max-height:90vh;overflow:auto;padding:22px}
+.st-dialog h3{margin:0 0 16px;font:600 18px/1.2 "Helvetica Neue",Arial}
+.st-dialog .st-field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.st-dialog .st-field label{font:700 10px/1 Arial;letter-spacing:.1em;text-transform:uppercase;color:#77736c}
+.st-dialog .st-field input,.st-dialog .st-field textarea,.st-dialog .st-field select{border:1px solid #e6e1d6;border-radius:2px;padding:10px;font-size:14px;background:#fff;width:100%;box-sizing:border-box}
+.st-dialog .st-field textarea{min-height:70px;resize:vertical}
+.st-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.st-checks{display:flex;gap:16px;flex-wrap:wrap}
+.st-check{display:flex;align-items:center;gap:7px;font-size:13px;color:#171717}
+.st-check input{width:auto!important}
+.st-dialog-actions{display:flex;gap:10px;align-items:center;margin-top:18px}
+.st-dialog-actions .st-spacer{flex:1}
+
+/* history panel */
+.st-history{background:#fbfaf7;border:1px solid #e6e1d6;border-radius:3px;padding:14px;margin-top:14px}
+.st-history h4{margin:0 0 10px;font:700 10px/1 Arial;letter-spacing:.14em;text-transform:uppercase;color:#77736c}
+.st-rev{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #f0ece3;font-size:13px}
+.st-rev:first-of-type{border-top:0}
+.st-rev .st-rev-when{flex:1;color:#8a857c;font-size:12px}

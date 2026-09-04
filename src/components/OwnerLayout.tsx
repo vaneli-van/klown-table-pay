@@ -10,6 +10,7 @@ import "../owner.css";
 const NAV = [
   { to: "/owner", label: "Payments" },
   { to: "/owner/theme", label: "Theme" },
+  { to: "/owner/menus", label: "Menu Studio" },
   { to: "/owner/integrations", label: "Integrations" },
   { to: "/owner/payouts", label: "Payouts" },
   { to: "/owner/bank", label: "Payout account" },
