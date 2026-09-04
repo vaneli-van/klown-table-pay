@@ -199,3 +199,82 @@ export function parsePrice(input: string): { price_pesewas: number | null; price
   }
   return { price_pesewas: null, price_display: t };
 }
+
+// ---- theme --------------------------------------------------------------
+export type ThemeTokens = {
+  fonts: { title: string; heading: string; item: string; body: string };
+  colors: { ink: string; paper: string; accent: string; heading: string; price: string };
+  layout: { columns: 1 | 2; price_leader: "dots" | "none"; item_photos: "none" | "small"; align: "left" | "center" };
+};
+
+export const studioThemeSave = (menuId: string, patch: { template_name?: string | null; tokens?: ThemeTokens }) =>
+  rpc<StudioTree>("studio_theme_save", { p_menu_id: menuId, p_patch: patch });
+export const studioThemeReset = (menuId: string) => rpc<StudioTree>("studio_theme_reset", { p_menu_id: menuId });
+
+export const DEFAULT_TOKENS: ThemeTokens = {
+  fonts: { title: "Georgia", heading: "Georgia", item: "Helvetica Neue", body: "Arial" },
+  colors: { ink: "#171717", paper: "#f7f5f0", accent: "#f3c744", heading: "#171717", price: "#171717" },
+  layout: { columns: 1, price_leader: "dots", item_photos: "small", align: "left" },
+};
+
+export const FONT_OPTIONS: { label: string; family: string; google?: string }[] = [
+  { label: "Georgia (serif)", family: "Georgia, 'Times New Roman', serif" },
+  { label: "Helvetica (sans)", family: "'Helvetica Neue', Arial, sans-serif" },
+  { label: "Arial (sans)", family: "Arial, sans-serif" },
+  { label: "Playfair Display", family: "'Playfair Display', Georgia, serif", google: "Playfair Display:ital,wght@0,400;0,600;0,700;1,400" },
+  { label: "Cormorant Garamond", family: "'Cormorant Garamond', Georgia, serif", google: "Cormorant Garamond:ital,wght@0,400;0,600;0,700;1,400" },
+  { label: "EB Garamond", family: "'EB Garamond', Georgia, serif", google: "EB Garamond:ital,wght@0,400;0,600;1,400" },
+  { label: "Lora", family: "'Lora', Georgia, serif", google: "Lora:ital,wght@0,400;0,600;1,400" },
+  { label: "Fraunces", family: "'Fraunces', Georgia, serif", google: "Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400" },
+  { label: "Inter", family: "'Inter', system-ui, sans-serif", google: "Inter:wght@400;600;700" },
+  { label: "Poppins", family: "'Poppins', system-ui, sans-serif", google: "Poppins:wght@400;600;700" },
+  { label: "Montserrat", family: "'Montserrat', system-ui, sans-serif", google: "Montserrat:wght@400;600;700" },
+  { label: "Space Grotesk", family: "'Space Grotesk', system-ui, sans-serif", google: "Space Grotesk:wght@400;500;700" },
+];
+
+export const THEME_TEMPLATES: { name: string; tokens: ThemeTokens }[] = [
+  { name: "Klown", tokens: DEFAULT_TOKENS },
+  { name: "Editorial", tokens: {
+    fonts: { title: "'Playfair Display', Georgia, serif", heading: "'Playfair Display', Georgia, serif", item: "'Lora', Georgia, serif", body: "'Lora', Georgia, serif" },
+    colors: { ink: "#2b2622", paper: "#f6f1e7", accent: "#9c6b3f", heading: "#2b2622", price: "#9c6b3f" },
+    layout: { columns: 1, price_leader: "dots", item_photos: "small", align: "left" } } },
+  { name: "Bistro", tokens: {
+    fonts: { title: "'Cormorant Garamond', Georgia, serif", heading: "'Cormorant Garamond', Georgia, serif", item: "'Helvetica Neue', Arial, sans-serif", body: "Arial, sans-serif" },
+    colors: { ink: "#1a1a1a", paper: "#ffffff", accent: "#c0392b", heading: "#c0392b", price: "#1a1a1a" },
+    layout: { columns: 1, price_leader: "none", item_photos: "none", align: "center" } } },
+  { name: "Garden", tokens: {
+    fonts: { title: "'Fraunces', Georgia, serif", heading: "'Space Grotesk', system-ui, sans-serif", item: "'Space Grotesk', system-ui, sans-serif", body: "'Inter', system-ui, sans-serif" },
+    colors: { ink: "#20302a", paper: "#ffffff", accent: "#3f6f4f", heading: "#20302a", price: "#20302a" },
+    layout: { columns: 1, price_leader: "none", item_photos: "small", align: "left" } } },
+  { name: "Minimal", tokens: {
+    fonts: { title: "'Helvetica Neue', Arial, sans-serif", heading: "'Helvetica Neue', Arial, sans-serif", item: "'Helvetica Neue', Arial, sans-serif", body: "Arial, sans-serif" },
+    colors: { ink: "#111111", paper: "#ffffff", accent: "#111111", heading: "#111111", price: "#111111" },
+    layout: { columns: 1, price_leader: "none", item_photos: "none", align: "left" } } },
+];
+
+/** Merge stored tokens (possibly partial) onto defaults so the editor always has a full object. */
+export function mergeTokens(t?: any): ThemeTokens {
+  const d = DEFAULT_TOKENS;
+  return {
+    fonts: { ...d.fonts, ...(t?.fonts ?? {}) },
+    colors: { ...d.colors, ...(t?.colors ?? {}) },
+    layout: { ...d.layout, ...(t?.layout ?? {}) },
+  };
+}
+
+/** Load the Google-font families used by the templates for accurate previews. */
+export function studioFontLinkHref(): string {
+  const fams = FONT_OPTIONS.filter((f) => f.google).map((f) => "family=" + encodeURIComponent(f.google!).replace(/%3A/g, ":").replace(/%40/g, "@").replace(/%3B/g, ";").replace(/%2C/g, ",").replace(/%20/g, "+"));
+  return "https://fonts.googleapis.com/css2?" + fams.join("&") + "&display=swap";
+}
+
+// ---- assets -------------------------------------------------------------
+/** Upload an item image to the shared branding bucket under <restaurant_id>/items/ (allowed by the owner storage policy). */
+export async function uploadStudioImage(restaurantId: string, file: File): Promise<string> {
+  const nameExt = file.name.split(".").pop();
+  const ext = nameExt && nameExt.length <= 5 ? nameExt.toLowerCase() : file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+  const path = `${restaurantId}/items/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
+  const { error } = await supabase.storage.from("branding").upload(path, file, { cacheControl: "31536000", upsert: false, contentType: file.type });
+  if (error) throw error;
+  return supabase.storage.from("branding").getPublicUrl(path).data.publicUrl;
+}

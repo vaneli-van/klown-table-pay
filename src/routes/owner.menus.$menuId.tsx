@@ -9,8 +9,10 @@ import {
   studioItemUpsert, studioItemDelete, studioItemDuplicate, studioItemsReorder,
   studioCatalogueList, studioCatalogueUpsert, studioPlaceCatalogueItem,
   studioRevisionSave, studioRevisionsList, studioRevisionRestore,
+  studioThemeSave, studioThemeReset, uploadStudioImage,
+  THEME_TEMPLATES, DEFAULT_TOKENS, FONT_OPTIONS, mergeTokens, studioFontLinkHref,
   priceText, parsePrice,
-  type StudioTree, type StudioSection, type StudioItem, type CatalogueItem, type RevisionRow,
+  type StudioTree, type StudioSection, type StudioItem, type CatalogueItem, type RevisionRow, type ThemeTokens,
 } from "@/lib/studio-api";
 import { relTime } from "@/lib/owner-api";
 import "../owner-studio.css";
@@ -42,6 +44,7 @@ function EditorBody({ menuId }: { menuId: string }) {
   const [itemDlg, setItemDlg] = useState<ItemDialogState>({ open: false, sectionId: null, item: null, catalogue: false });
   const [sectionDlg, setSectionDlg] = useState<SectionDialogState>({ open: false, section: null });
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
   const [revisions, setRevisions] = useState<RevisionRow[]>([]);
   const [catSearch, setCatSearch] = useState("");
   const [dragCat, setDragCat] = useState<string | null>(null);
@@ -144,6 +147,7 @@ function EditorBody({ menuId }: { menuId: string }) {
         {tree.menu.source === "pos" && <span className="st-badge pos">POS</span>}
         <span className="st-spacer" />
         <span className={"st-save-status " + (saving > 0 ? "saving" : "")}>{savingText}</span>
+        <button className="outline-button" onClick={() => setThemeOpen(true)}>Theme</button>
         <button className="outline-button" onClick={saveVersion}>Save version</button>
         <button className="outline-button" onClick={openHistory}>History</button>
       </div>
@@ -255,6 +259,9 @@ function EditorBody({ menuId }: { menuId: string }) {
           run={run}
         />
       )}
+      {themeOpen && (
+        <ThemeDialog tree={tree} onClose={() => setThemeOpen(false)} onSaved={(t) => { if (t) setTree(t); }} run={run} />
+      )}
     </>
   );
 }
@@ -266,6 +273,7 @@ function ItemDialog({ state, currency, onClose, onSaved, run }: {
   run: <T>(p: Promise<T>, opts?: { tree?: boolean; ok?: string }) => Promise<T | undefined>;
 }) {
   useEscape(onClose);
+  const { restaurantId, show } = useOwner();
   const it = state.item;
   const [name, setName] = useState(it?.name ?? "");
   const [price, setPrice] = useState(priceText(it?.price_pesewas, it?.price_display, currency).replace(/^GH₵/, "") || (it?.price_display ?? ""));
@@ -275,6 +283,16 @@ function ItemDialog({ state, currency, onClose, onSaved, run }: {
   const [available, setAvailable] = useState(it?.available ?? true);
   const [soldOut, setSoldOut] = useState(it?.sold_out ?? false);
   const [visible, setVisible] = useState(it?.visible ?? true);
+  const [imageUrl, setImageUrl] = useState<string | null>(it?.image_url ?? null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const uploadImg = async (file?: File) => {
+    if (!file) return;
+    setUploading(true);
+    try { setImageUrl(await uploadStudioImage(restaurantId, file)); }
+    catch (e: any) { show("Upload failed: " + (e?.message ?? "error")); }
+    finally { setUploading(false); }
+  };
 
   const save = async () => {
     if (!name.trim()) return;
@@ -284,7 +302,7 @@ function ItemDialog({ state, currency, onClose, onSaved, run }: {
       ...(it ? { id: it.id } : {}),
       name: name.trim(), description: description || null, extras: extras || null,
       price_pesewas: parsed.price_pesewas, price_display: parsed.price_display,
-      tags: tagArr, available, sold_out: soldOut, visible,
+      tags: tagArr, available, sold_out: soldOut, visible, image_url: imageUrl,
     };
     if (state.catalogue) {
       await run(studioCatalogueUpsert(payload), { tree: false, ok: "Saved to food items" });
@@ -305,6 +323,16 @@ function ItemDialog({ state, currency, onClose, onSaved, run }: {
         </div>
         <div className="st-field"><label>Description</label><textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Smoked tomato rice, mozzarella, green pepper relish." /></div>
         <div className="st-field"><label>Extras</label><input value={extras} onChange={(e) => setExtras(e.target.value)} placeholder="Add prawns +25" /></div>
+        <div className="st-field"><label>Photo</label>
+          <div className="own-image-row">
+            <span className="own-thumb" style={{ background: "#171717" }}>{imageUrl ? <img src={imageUrl} alt="" /> : <i>No photo</i>}</span>
+            <div className="own-image-actions">
+              <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => { uploadImg(e.target.files?.[0]); e.currentTarget.value = ""; }} />
+              <button className="outline-button" type="button" onClick={() => fileRef.current?.click()} disabled={uploading}>{uploading ? "Uploading…" : imageUrl ? "Replace photo" : "Upload photo"}</button>
+              {imageUrl && <button className="quiet" type="button" onClick={() => setImageUrl(null)}>Remove</button>}
+            </div>
+          </div>
+        </div>
         <div className="st-field"><label>Tags (comma separated)</label><input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Vegetarian, Popular" /></div>
         {!state.catalogue && (
           <div className="st-checks">
@@ -382,6 +410,118 @@ function SectionDialog({ menuId, section, onClose, onSaved, run }: {
           <span className="st-spacer" />
           <button className="quiet" onClick={onClose}>Cancel</button>
           <button className="gold-button" onClick={save}>{section ? "Save" : "Add"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Theme dialog ----------
+function ThemeDialog({ tree, onClose, onSaved, run }: {
+  tree: StudioTree; onClose: () => void;
+  onSaved: (tree: StudioTree | undefined) => void;
+  run: <T>(p: Promise<T>, opts?: { tree?: boolean; ok?: string }) => Promise<T | undefined>;
+}) {
+  useEscape(onClose);
+  const [tokens, setTokens] = useState<ThemeTokens>(mergeTokens(tree.theme?.tokens));
+  const [templateName, setTemplateName] = useState<string | null>(tree.theme?.template_name ?? null);
+
+  useEffect(() => {
+    const id = "studio-fonts";
+    if (!document.getElementById(id)) {
+      const l = document.createElement("link");
+      l.id = id; l.rel = "stylesheet"; l.href = studioFontLinkHref();
+      document.head.appendChild(l);
+    }
+  }, []);
+
+  const setFont = (k: keyof ThemeTokens["fonts"], v: string) => setTokens((t) => ({ ...t, fonts: { ...t.fonts, [k]: v } }));
+  const setColor = (k: keyof ThemeTokens["colors"], v: string) => setTokens((t) => ({ ...t, colors: { ...t.colors, [k]: v } }));
+  const setLayout = (k: keyof ThemeTokens["layout"], v: any) => setTokens((t) => ({ ...t, layout: { ...t.layout, [k]: v } }));
+  const applyTemplate = (name: string) => { const tpl = THEME_TEMPLATES.find((t) => t.name === name); if (tpl) { setTokens(JSON.parse(JSON.stringify(tpl.tokens))); setTemplateName(name); } };
+
+  const save = async () => { const t = await run(studioThemeSave(tree.menu.id, { template_name: templateName, tokens }), { ok: "Theme saved" }); onSaved(t as any); };
+  const reset = async () => { if (!window.confirm("Reset this menu's theme to the Klown default?")) return; const t = await run(studioThemeReset(tree.menu.id), { ok: "Theme reset" }); onSaved(t as any); onClose(); };
+
+  const previewSections = tree.sections.length ? tree.sections.slice(0, 2) : [{ id: "s", name: "Starters", items: [
+    { id: "a", name: "Butternut squash soup", description: "Goat cheese sprinkle", price_pesewas: 10000, price_display: null },
+    { id: "b", name: "Crunchy chicken", description: "Breaded crust, sweet chili dip", price_pesewas: 13000, price_display: null },
+  ] }] as any;
+  const cur = tree.menu.currency;
+  const fontLabel = (fam: string) => FONT_OPTIONS.find((f) => f.family === fam)?.label ?? fam;
+
+  return (
+    <div className="st-dialog-back" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="st-dialog st-theme-dialog">
+        <h3>Theme · {tree.menu.name}</h3>
+        <div className="st-theme-grid">
+          <div className="st-theme-controls">
+            <label className="st-tsub">Template</label>
+            <div className="st-tpl-row">
+              {THEME_TEMPLATES.map((t) => (
+                <button key={t.name} type="button" className={"st-tpl" + (templateName === t.name ? " active" : "")} onClick={() => applyTemplate(t.name)}>{t.name}</button>
+              ))}
+            </div>
+
+            <label className="st-tsub">Fonts</label>
+            {([["title", "Title"], ["heading", "Section heading"], ["item", "Item name"], ["body", "Description"]] as const).map(([k, lbl]) => (
+              <div className="st-field" key={k}>
+                <label>{lbl}</label>
+                <select value={FONT_OPTIONS.some((f) => f.family === tokens.fonts[k]) ? tokens.fonts[k] : ""} onChange={(e) => setFont(k, e.target.value)}>
+                  {!FONT_OPTIONS.some((f) => f.family === tokens.fonts[k]) && <option value="">{fontLabel(tokens.fonts[k])}</option>}
+                  {FONT_OPTIONS.map((f) => <option key={f.label} value={f.family}>{f.label}</option>)}
+                </select>
+              </div>
+            ))}
+
+            <label className="st-tsub">Colours</label>
+            {([["paper", "Background"], ["ink", "Text"], ["accent", "Accent"], ["heading", "Heading"], ["price", "Price"]] as const).map(([k, lbl]) => (
+              <div className="st-colour-row" key={k}>
+                <span>{lbl}</span>
+                <input type="color" value={tokens.colors[k]} onChange={(e) => setColor(k, e.target.value)} aria-label={lbl} />
+                <input className="st-colour-hex" value={tokens.colors[k]} onChange={(e) => setColor(k, e.target.value)} />
+              </div>
+            ))}
+
+            <label className="st-tsub">Layout</label>
+            <div className="st-two">
+              <div className="st-field"><label>Columns</label><select value={tokens.layout.columns} onChange={(e) => setLayout("columns", Number(e.target.value))}>{[1, 2].map((n) => <option key={n} value={n}>{n}</option>)}</select></div>
+              <div className="st-field"><label>Price leader</label><select value={tokens.layout.price_leader} onChange={(e) => setLayout("price_leader", e.target.value)}><option value="dots">Dots</option><option value="none">None</option></select></div>
+            </div>
+            <div className="st-two">
+              <div className="st-field"><label>Item photos</label><select value={tokens.layout.item_photos} onChange={(e) => setLayout("item_photos", e.target.value)}><option value="small">Small</option><option value="none">None</option></select></div>
+              <div className="st-field"><label>Alignment</label><select value={tokens.layout.align} onChange={(e) => setLayout("align", e.target.value)}><option value="left">Left</option><option value="center">Center</option></select></div>
+            </div>
+          </div>
+
+          <div className="st-theme-preview-wrap">
+            <span className="panel-kicker">Live preview</span>
+            <div className="st-theme-preview" style={{ background: tokens.colors.paper, color: tokens.colors.ink }}>
+              <div className="st-tp-title" style={{ fontFamily: tokens.fonts.title, textAlign: tokens.layout.align }}>{tree.menu.name}</div>
+              {previewSections.map((sec: any) => (
+                <div key={sec.id} className="st-tp-section">
+                  <div className="st-tp-heading" style={{ fontFamily: tokens.fonts.heading, color: tokens.colors.heading, textAlign: tokens.layout.align }}>{sec.name || "Section"}</div>
+                  {(sec.items ?? []).slice(0, 3).map((it: any) => (
+                    <div key={it.id} className="st-tp-item">
+                      <div className="st-tp-row">
+                        <span style={{ fontFamily: tokens.fonts.item, fontWeight: 600 }}>{it.name}</span>
+                        {tokens.layout.price_leader === "dots" && <span className="st-tp-dots" />}
+                        <span style={{ fontFamily: tokens.fonts.item, color: tokens.colors.price, fontWeight: 600 }}>{priceText(it.price_pesewas, it.price_display, cur)}</span>
+                      </div>
+                      {it.description && <div className="st-tp-desc" style={{ fontFamily: tokens.fonts.body }}>{it.description}</div>}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="st-dialog-actions">
+          <button className="quiet" style={{ color: "#b0553f" }} onClick={reset}>Reset to Klown</button>
+          <span className="st-spacer" />
+          <button className="quiet" onClick={onClose}>Cancel</button>
+          <button className="gold-button" onClick={save}>Save theme</button>
         </div>
       </div>
     </div>
