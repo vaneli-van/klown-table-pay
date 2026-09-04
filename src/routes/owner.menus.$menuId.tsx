@@ -503,6 +503,7 @@ function ThemeDialog({ tree, onClose, onSaved, run }: {
   ] }] as any;
   const cur = tree.menu.currency;
   const fontLabel = (fam: string) => FONT_OPTIONS.find((f) => f.family === fam)?.label ?? fam;
+  const showPrice = (it: any) => tokens.layout.price_style === "plain" && it.price_pesewas != null && !(it.price_display && String(it.price_display).trim()) ? (it.price_pesewas / 100).toLocaleString("en-GH", { maximumFractionDigits: 2 }) : priceText(it.price_pesewas, it.price_display, cur);
 
   return (
     <div className="st-dialog-back" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
@@ -546,6 +547,10 @@ function ThemeDialog({ tree, onClose, onSaved, run }: {
               <div className="st-field"><label>Item photos</label><select value={tokens.layout.item_photos} onChange={(e) => setLayout("item_photos", e.target.value)}><option value="small">Small</option><option value="none">None</option></select></div>
               <div className="st-field"><label>Alignment</label><select value={tokens.layout.align} onChange={(e) => setLayout("align", e.target.value)}><option value="left">Left</option><option value="center">Center</option></select></div>
             </div>
+            <div className="st-two">
+              <div className="st-field"><label>Prices</label><select value={tokens.layout.price_style ?? "symbol"} onChange={(e) => setLayout("price_style", e.target.value)}><option value="symbol">GH₵ 35.00</option><option value="plain">35 (plain)</option></select></div>
+              <div className="st-field" />
+            </div>
           </div>
 
           <div className="st-theme-preview-wrap">
@@ -560,7 +565,7 @@ function ThemeDialog({ tree, onClose, onSaved, run }: {
                       <div className="st-tp-row">
                         <span style={{ fontFamily: tokens.fonts.item, fontWeight: 600 }}>{it.name}</span>
                         {tokens.layout.price_leader === "dots" && <span className="st-tp-dots" />}
-                        <span style={{ fontFamily: tokens.fonts.item, color: tokens.colors.price, fontWeight: 600 }}>{priceText(it.price_pesewas, it.price_display, cur)}</span>
+                        <span style={{ fontFamily: tokens.fonts.item, color: tokens.colors.price, fontWeight: 600 }}>{showPrice(it)}</span>
                       </div>
                       {it.description && <div className="st-tp-desc" style={{ fontFamily: tokens.fonts.body }}>{it.description}</div>}
                     </div>

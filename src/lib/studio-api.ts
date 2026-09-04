@@ -204,7 +204,7 @@ export function parsePrice(input: string): { price_pesewas: number | null; price
 export type ThemeTokens = {
   fonts: { title: string; heading: string; item: string; body: string };
   colors: { ink: string; paper: string; accent: string; heading: string; price: string };
-  layout: { columns: 1 | 2; price_leader: "dots" | "none"; item_photos: "none" | "small"; align: "left" | "center" };
+  layout: { columns: 1 | 2; price_leader: "dots" | "none"; item_photos: "none" | "small"; align: "left" | "center"; price_style?: "symbol" | "plain" };
 };
 
 export const studioThemeSave = (menuId: string, patch: { template_name?: string | null; tokens?: ThemeTokens }) =>
@@ -214,13 +214,14 @@ export const studioThemeReset = (menuId: string) => rpc<StudioTree>("studio_them
 export const DEFAULT_TOKENS: ThemeTokens = {
   fonts: { title: "Georgia", heading: "Georgia", item: "Helvetica Neue", body: "Arial" },
   colors: { ink: "#171717", paper: "#f7f5f0", accent: "#f3c744", heading: "#171717", price: "#171717" },
-  layout: { columns: 1, price_leader: "dots", item_photos: "small", align: "left" },
+  layout: { columns: 1, price_leader: "dots", item_photos: "small", align: "left", price_style: "symbol" },
 };
 
 export const FONT_OPTIONS: { label: string; family: string; google?: string }[] = [
   { label: "Georgia (serif)", family: "Georgia, 'Times New Roman', serif" },
   { label: "Helvetica (sans)", family: "'Helvetica Neue', Arial, sans-serif" },
   { label: "Arial (sans)", family: "Arial, sans-serif" },
+  { label: "Open Sans", family: "'Open Sans', system-ui, sans-serif", google: "Open Sans:ital,wght@0,400;0,600;0,700;1,400" },
   { label: "Playfair Display", family: "'Playfair Display', Georgia, serif", google: "Playfair Display:ital,wght@0,400;0,600;0,700;1,400" },
   { label: "Cormorant Garamond", family: "'Cormorant Garamond', Georgia, serif", google: "Cormorant Garamond:ital,wght@0,400;0,600;0,700;1,400" },
   { label: "EB Garamond", family: "'EB Garamond', Georgia, serif", google: "EB Garamond:ital,wght@0,400;0,600;1,400" },
@@ -239,9 +240,9 @@ export const THEME_TEMPLATES: { name: string; tokens: ThemeTokens }[] = [
     colors: { ink: "#2b2622", paper: "#f6f1e7", accent: "#9c6b3f", heading: "#2b2622", price: "#9c6b3f" },
     layout: { columns: 1, price_leader: "dots", item_photos: "small", align: "left" } } },
   { name: "Bistro", tokens: {
-    fonts: { title: "'Cormorant Garamond', Georgia, serif", heading: "'Cormorant Garamond', Georgia, serif", item: "'Helvetica Neue', Arial, sans-serif", body: "Arial, sans-serif" },
-    colors: { ink: "#1a1a1a", paper: "#ffffff", accent: "#c0392b", heading: "#c0392b", price: "#1a1a1a" },
-    layout: { columns: 1, price_leader: "none", item_photos: "none", align: "center" } } },
+    fonts: { title: "'Open Sans', system-ui, sans-serif", heading: "'Open Sans', system-ui, sans-serif", item: "'Open Sans', system-ui, sans-serif", body: "'Open Sans', system-ui, sans-serif" },
+    colors: { ink: "#000000", paper: "#f9fafb", accent: "#cf1e1e", heading: "#cf1e1e", price: "#000000" },
+    layout: { columns: 1, price_leader: "none", item_photos: "none", align: "center", price_style: "plain" } } },
   { name: "Garden", tokens: {
     fonts: { title: "'Fraunces', Georgia, serif", heading: "'Space Grotesk', system-ui, sans-serif", item: "'Space Grotesk', system-ui, sans-serif", body: "'Inter', system-ui, sans-serif" },
     colors: { ink: "#20302a", paper: "#ffffff", accent: "#3f6f4f", heading: "#20302a", price: "#20302a" },
