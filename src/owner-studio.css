@@ -130,3 +130,12 @@
 .st-share-url{display:flex;gap:8px;margin-top:10px}
 .st-share-url input{flex:1;font-size:12px;font-family:ui-monospace,Menlo,Consolas,monospace}
 .st-share-qr{display:flex;justify-content:center;padding:16px;background:#fff;border:1px solid #e6e1d6;border-radius:8px;margin:12px 0}
+
+/* opening hours */
+.st-hours{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+.st-hours-row{display:flex;align-items:center;gap:10px}
+.st-hours-day{min-width:120px}
+.st-hours-times{display:flex;align-items:center;gap:6px}
+.st-hours-times input{width:118px}
+.st-hours-times span{color:#77736c;font-size:12px}
+.st-hours-closed{color:#a29d93;font-size:12px}

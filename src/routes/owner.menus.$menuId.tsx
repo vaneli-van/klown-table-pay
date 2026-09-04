@@ -34,6 +34,8 @@ function EditorRoute() {
 }
 
 const SECTION_TYPES = ["Title", "Standard", "Alternate", "Alternate 2", "Subheading"];
+const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+const DAY_LABELS: Record<string, string> = { mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday", sun: "Sunday" };
 
 type ItemDialogState = { open: boolean; sectionId: string | null; item: StudioItem | null; catalogue: boolean };
 type SectionDialogState = { open: boolean; section: StudioSection | null };
@@ -599,6 +601,13 @@ function PageDialog({ tree, onClose, onSaved, run }: {
   const [logoUrl, setLogoUrl] = useState<string>(d.logo_url ?? "");
   const [bannerUrl, setBannerUrl] = useState<string>(d.banner_url ?? "");
   const [busy, setBusy] = useState<null | "logo" | "banner">(null);
+  const [hours, setHours] = useState<Record<string, { open: string; close: string } | null>>(() => {
+    const h = d.hours && typeof d.hours === "object" && !Array.isArray(d.hours) ? d.hours : {};
+    const out: Record<string, { open: string; close: string } | null> = {};
+    for (const k of DAY_KEYS) { const v = (h as any)[k]; out[k] = v && v.open && v.close ? { open: String(v.open), close: String(v.close) } : null; }
+    return out;
+  });
+  const setDay = (k: string, v: { open: string; close: string } | null) => setHours((h) => ({ ...h, [k]: v }));
 
   const upload = async (kind: "logo" | "banner", file: File | undefined) => {
     if (!file) return;
@@ -615,7 +624,7 @@ function PageDialog({ tree, onClose, onSaved, run }: {
       biz_name: bizName.trim(), phone: phone.trim(), info: info.trim(),
       link_url: linkUrl.trim(), link_text: linkText.trim(),
       welcome_alert: welcomeAlert.trim(), banner_bg: bannerBg,
-      logo_url: logoUrl, banner_url: bannerUrl,
+      logo_url: logoUrl, banner_url: bannerUrl, hours,
     }), { ok: "Page saved" });
     onSaved(t as any);
   };
@@ -664,6 +673,27 @@ function PageDialog({ tree, onClose, onSaved, run }: {
           </div>
         </div>
 
+        <label className="st-tsub">Opening hours</label>
+        <p style={{ fontSize: 11, color: "#a29d93", margin: "2px 0 6px" }}>Diners see an “Open now / Closed now” badge (Accra time). Untick a day if you’re closed then.</p>
+        <div className="st-hours">
+          {DAY_KEYS.map((k) => {
+            const day = hours[k];
+            return (
+              <div className="st-hours-row" key={k}>
+                <label className="st-check st-hours-day"><input type="checkbox" checked={!!day} onChange={(e) => setDay(k, e.target.checked ? (day ?? { open: "09:00", close: "22:00" }) : null)} /> {DAY_LABELS[k]}</label>
+                {day ? (
+                  <span className="st-hours-times">
+                    <input type="time" value={day.open} onChange={(e) => setDay(k, { open: e.target.value, close: day.close })} />
+                    <span>to</span>
+                    <input type="time" value={day.close} onChange={(e) => setDay(k, { open: day.open, close: e.target.value })} />
+                  </span>
+                ) : (
+                  <span className="st-hours-closed">Closed</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
         <div className="st-dialog-actions">
           <span className="st-spacer" />
           <button className="quiet" onClick={onClose}>Cancel</button>
