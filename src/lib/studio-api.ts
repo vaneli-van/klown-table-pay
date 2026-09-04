@@ -303,3 +303,7 @@ export const studioMenuUnpublish = (menuId: string) => rpc<StudioTree>("studio_m
 // ---- digital / page settings -------------------------------------------
 export const studioDigitalSave = (menuId: string, patch: Record<string, any>) =>
   rpc<StudioTree>("studio_digital_save", { p_menu_id: menuId, p_patch: patch });
+
+// ---- public share -------------------------------------------------------
+export const PUBLIC_MENU_BASE = DINER_API;
+export const publicMenuUrl = (slug: string) => `${PUBLIC_MENU_BASE}/m/${slug}`;

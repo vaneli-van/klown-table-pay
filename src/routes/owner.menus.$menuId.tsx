@@ -10,12 +10,13 @@ import {
   studioCatalogueList, studioCatalogueUpsert, studioPlaceCatalogueItem, studioImportPos,
   studioRevisionSave, studioRevisionsList, studioRevisionRestore,
   studioModifierGroupUpsert, studioModifierGroupDelete, studioModifierUpsert, studioModifierDelete,
-  studioThemeSave, studioThemeReset, studioDigitalSave, uploadStudioImage,
+  studioThemeSave, studioThemeReset, studioDigitalSave, uploadStudioImage, publicMenuUrl,
   THEME_TEMPLATES, DEFAULT_TOKENS, FONT_OPTIONS, mergeTokens, studioFontLinkHref,
   priceText, parsePrice,
   type StudioTree, type StudioSection, type StudioItem, type CatalogueItem, type RevisionRow, type ThemeTokens, type ModifierGroup, type Modifier,
 } from "@/lib/studio-api";
 import { relTime } from "@/lib/owner-api";
+import { QRCodeCanvas } from "qrcode.react";
 import "../owner-studio.css";
 
 export const Route = createFileRoute("/owner/menus/$menuId")({
@@ -48,6 +49,7 @@ function EditorBody({ menuId }: { menuId: string }) {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
   const [pageOpen, setPageOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [revisions, setRevisions] = useState<RevisionRow[]>([]);
   const [catSearch, setCatSearch] = useState("");
   const [drag, setDrag] = useState<DragState | null>(null);
@@ -181,6 +183,7 @@ function EditorBody({ menuId }: { menuId: string }) {
         {tree.menu.source === "pos" && <span className="st-badge pos">POS</span>}
         <span className="st-spacer" />
         <span className={"st-save-status " + (saving > 0 ? "saving" : "")}>{savingText}</span>
+        <button className="outline-button" onClick={() => setShareOpen(true)}>Share</button>
         <button className="outline-button" onClick={importPos}>Import from POS</button>
         <button className="outline-button" onClick={() => setPageOpen(true)}>Page</button>
         <button className="outline-button" onClick={() => setThemeOpen(true)}>Theme</button>
@@ -306,6 +309,9 @@ function EditorBody({ menuId }: { menuId: string }) {
       )}
       {pageOpen && (
         <PageDialog tree={tree} onClose={() => setPageOpen(false)} onSaved={(t) => { if (t) setTree(t); }} run={run} />
+      )}
+      {shareOpen && (
+        <ShareDialog tree={tree} onClose={() => setShareOpen(false)} />
       )}
     </>
   );
@@ -720,6 +726,63 @@ function ItemModifiers({ itemId, currency, run, initial }: {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ---------- Share dialog (public link + QR) ----------
+function ShareDialog({ tree, onClose }: { tree: StudioTree; onClose: () => void }) {
+  useEscape(onClose);
+  const { show } = useOwner();
+  const slug: string | null = (tree.digital as any)?.public_slug ?? null;
+  const isLive = tree.menu.status === "live" && !!slug;
+  const url = slug ? publicMenuUrl(slug) : "";
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(url); show("Link copied"); }
+    catch { show("Couldn't copy — select the link and copy manually"); }
+  };
+  const downloadPng = () => {
+    const canvas = wrapRef.current?.querySelector("canvas") as HTMLCanvasElement | null;
+    if (!canvas) return;
+    const a = document.createElement("a");
+    a.href = canvas.toDataURL("image/png");
+    a.download = `${slug || "menu"}-qr.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+
+  return (
+    <div className="st-dialog-back" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="st-dialog">
+        <h3>Share · {tree.menu.name}</h3>
+        {!isLive ? (
+          <>
+            <p style={{ fontSize: 13, color: "#77736c" }}>Publish this menu first — set it to <b>Live</b> using the badge at the top — to get a public link and a QR code diners can scan without a table.</p>
+            <div className="st-dialog-actions">
+              <span className="st-spacer" />
+              <button className="gold-button" onClick={onClose}>Close</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p style={{ fontSize: 12, color: "#a29d93", marginTop: -4 }}>A view-only public menu. Anyone can open it — no table scan needed. Reflects your latest published changes.</p>
+            <div className="st-share-url">
+              <input readOnly value={url} onFocus={(e) => e.currentTarget.select()} />
+              <button className="outline-button" onClick={copy}>Copy</button>
+            </div>
+            <div className="st-share-qr" ref={wrapRef}>
+              <QRCodeCanvas value={url} size={220} marginSize={2} level="M" fgColor="#171717" bgColor="#ffffff" />
+            </div>
+            <div className="st-dialog-actions">
+              <a className="quiet" href={url} target="_blank" rel="noopener noreferrer">Open menu ↗</a>
+              <span className="st-spacer" />
+              <button className="outline-button" onClick={downloadPng}>Download QR (PNG)</button>
+              <button className="gold-button" onClick={onClose}>Done</button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
