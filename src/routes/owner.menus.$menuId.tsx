@@ -605,7 +605,11 @@ function PageDialog({ tree, onClose, onSaved, run }: {
   const [bannerBg, setBannerBg] = useState<string>(d.banner_bg || "#c8a56b");
   const [logoUrl, setLogoUrl] = useState<string>(d.logo_url ?? "");
   const [bannerUrl, setBannerUrl] = useState<string>(d.banner_url ?? "");
-  const [busy, setBusy] = useState<null | "logo" | "banner">(null);
+  const [busy, setBusy] = useState<null | "logo" | "banner" | "rec">(null);
+  const [recName, setRecName] = useState<string>(d.rec_name ?? "");
+  const [recNote, setRecNote] = useState<string>(d.rec_note ?? "");
+  const [recPrice, setRecPrice] = useState<string>(d.rec_price_pesewas != null ? String(d.rec_price_pesewas / 100) : "");
+  const [recImage, setRecImage] = useState<string>(d.rec_image_url ?? "");
   const [hours, setHours] = useState<Record<string, { open: string; close: string } | null>>(() => {
     const h = d.hours && typeof d.hours === "object" && !Array.isArray(d.hours) ? d.hours : {};
     const out: Record<string, { open: string; close: string } | null> = {};
@@ -614,12 +618,12 @@ function PageDialog({ tree, onClose, onSaved, run }: {
   });
   const setDay = (k: string, v: { open: string; close: string } | null) => setHours((h) => ({ ...h, [k]: v }));
 
-  const upload = async (kind: "logo" | "banner", file: File | undefined) => {
+  const upload = async (kind: "logo" | "banner" | "rec", file: File | undefined) => {
     if (!file) return;
     setBusy(kind);
     try {
       const url = await uploadStudioImage(restaurantId, file);
-      if (kind === "logo") setLogoUrl(url); else setBannerUrl(url);
+      if (kind === "logo") setLogoUrl(url); else if (kind === "banner") setBannerUrl(url); else setRecImage(url);
     } catch (e: any) { show("Upload failed: " + (e?.message ?? "error")); }
     finally { setBusy(null); }
   };
@@ -630,6 +634,8 @@ function PageDialog({ tree, onClose, onSaved, run }: {
       link_url: linkUrl.trim(), link_text: linkText.trim(),
       welcome_alert: welcomeAlert.trim(), banner_bg: bannerBg,
       logo_url: logoUrl, banner_url: bannerUrl, hours,
+      rec_name: recName.trim(), rec_note: recNote.trim(), rec_image_url: recImage,
+      rec_price_pesewas: recPrice.trim() ? String(Math.round((parseFloat(recPrice) || 0) * 100)) : "",
     }), { ok: "Page saved" });
     onSaved(t as any);
   };
@@ -698,6 +704,18 @@ function PageDialog({ tree, onClose, onSaved, run }: {
               </div>
             );
           })}
+        </div>
+        <label className="st-tsub">“One last thing” recommendation</label>
+        <p style={{ fontSize: 11, color: "#a29d93", margin: "2px 0 6px" }}>Shown to diners before checkout as an upsell. Leave the name blank to hide it.</p>
+        <div className="st-two">
+          <div className="st-field"><label>Item name</label><input value={recName} onChange={(e) => setRecName(e.target.value)} placeholder="e.g. Tiramisu" /></div>
+          <div className="st-field"><label>Price</label><input value={recPrice} onChange={(e) => setRecPrice(e.target.value)} inputMode="decimal" placeholder="35" /></div>
+        </div>
+        <div className="st-field"><label>Note</label><input value={recNote} onChange={(e) => setRecNote(e.target.value)} placeholder="e.g. House favourite, made fresh" /></div>
+        <div className="st-field"><label>Photo</label>
+          {recImage && <img src={recImage} alt="" style={{ height: 64, width: "auto", objectFit: "cover", borderRadius: 6, marginBottom: 6 }} />}
+          <input type="file" accept="image/*" onChange={(e) => upload("rec", e.target.files?.[0])} disabled={busy === "rec"} />
+          {recImage && <button className="quiet" style={{ color: "#b0553f", marginTop: 4 }} onClick={() => setRecImage("")}>Remove photo</button>}
         </div>
         <div className="st-dialog-actions">
           <span className="st-spacer" />
