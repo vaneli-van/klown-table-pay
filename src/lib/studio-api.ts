@@ -280,7 +280,7 @@ export async function uploadStudioImage(restaurantId: string, file: File): Promi
 }
 
 // ---- POS import (calls the diner-app endpoint that reaches Odoo) ---------
-const DINER_API = "https://kozo-pay-guest-app.lovable.app";
+const DINER_API = "https://app.klown.io";
 export async function studioImportPos(menuId: string): Promise<{ ok: true; sections_added: number; items_added: number; skipped: number; total_products: number }> {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token;
