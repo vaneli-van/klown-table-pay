@@ -7,11 +7,51 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { AuthProvider } from "../lib/auth";
+import { supabase } from "../lib/supabase";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+
+/** Single password-recovery handler for the whole app (owner + admin). The
+ * shared Supabase client has detectSessionInUrl:false, so we parse the recovery
+ * tokens from the URL hash ourselves, open a session and let the user set a new
+ * password — wherever the reset link happens to land. */
+function RecoveryScreen({ onDone }: { onDone: () => void }) {
+  const [pw, setPw] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pw.length < 6) { setErr("Use at least 6 characters."); return; }
+    if (pw !== pw2) { setErr("Those passwords don't match."); return; }
+    setBusy(true);
+    setErr(null);
+    const { error } = await supabase.auth.updateUser({ password: pw });
+    setBusy(false);
+    if (error) { setErr(error.message); return; }
+    onDone();
+  };
+
+  return (
+    <div className="auth-prototype">
+      <div className="auth-card">
+        <span className="eyebrow" style={{ color: "var(--gold)" }}>KLOWN</span>
+        <h1>Set a new password</h1>
+        <p>Choose a new password for your Klown account, then you'll be signed in.</p>
+        <form onSubmit={submit}>
+          <input type="password" required placeholder="New password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="new-password" />
+          <input type="password" required placeholder="Confirm new password" value={pw2} onChange={(e) => setPw2(e.target.value)} autoComplete="new-password" />
+          {err && <p style={{ color: "#e6a08c", fontSize: 12, margin: "4px 0 0" }} role="alert">{err}</p>}
+          <button className="auth-submit" type="submit" disabled={busy}>{busy ? "Saving…" : "Set password & continue"}</button>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 function NotFoundComponent() {
   return (
@@ -124,12 +164,30 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const [recovery, setRecovery] = useState(false);
+
+  // Catch a password-recovery link on any page (owner or admin). Parse the
+  // recovery tokens from the URL hash, open a session, and show the set-password
+  // screen; on success fall through to the normal app, now signed in.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const h = window.location.hash || "";
+    if (!h.includes("type=recovery")) return;
+    const params = new URLSearchParams(h.replace(/^#/, ""));
+    const access_token = params.get("access_token");
+    const refresh_token = params.get("refresh_token");
+    if (!access_token || !refresh_token) return;
+    supabase.auth.setSession({ access_token, refresh_token }).then(({ error }) => {
+      if (!error) setRecovery(true);
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    });
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <AuthProvider>
-        <Outlet />
+        {recovery ? <RecoveryScreen onDone={() => setRecovery(false)} /> : <Outlet />}
       </AuthProvider>
     </QueryClientProvider>
   );

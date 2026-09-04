@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import type { Session } from "@supabase/supabase-js";
@@ -37,12 +37,24 @@ export function useOwner(): OwnerCtxValue {
   return v;
 }
 
+function AuthShell({ children }: { children: ReactNode }) {
+  return (
+    <div className="auth-prototype">
+      <div className="auth-card">
+        <span className="eyebrow" style={{ color: "var(--gold)" }}>KLOWN FOR RESTAURANTS</span>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function OwnerAuth() {
-  const [mode, setMode] = useState<"signin" | "register">("signin");
+  const [mode, setMode] = useState<"signin" | "register" | "forgot">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,15 +64,18 @@ function OwnerAuth() {
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
         if (error) throw error;
-      } else {
+      } else if (mode === "register") {
         const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
         if (error) throw error;
-        // Invited owners are auto-confirmed by the DB trigger; if no session came
-        // back, sign in straight away.
         if (!data.session) {
           const { error: e2 } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
           if (e2) throw e2;
         }
+      } else {
+        const redirectTo = typeof window !== "undefined" ? window.location.origin + "/owner" : undefined;
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
+        if (error) throw error;
+        setSent(true);
       }
     } catch (e: any) {
       setErr(e?.message ?? "Something went wrong.");
@@ -69,45 +84,68 @@ function OwnerAuth() {
     }
   };
 
+  const go = (m: "signin" | "register" | "forgot") => { setMode(m); setErr(null); setSent(false); };
+
+  if (mode === "forgot") {
+    return (
+      <AuthShell>
+        <h1>Reset password</h1>
+        {sent ? (
+          <>
+            <p>If <b>{email.trim()}</b> has an account, a reset link is on its way. Open it on this device and you'll be able to set a new password.</p>
+            <button className="admin-secondary" type="button" onClick={() => go("signin")}>Back to sign in</button>
+          </>
+        ) : (
+          <>
+            <p>Enter your account email and we'll send you a link to set a new password.</p>
+            <form onSubmit={submit}>
+              <input type="email" required placeholder="you@restaurant.com" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+              {err && <p style={{ color: "#e6a08c", fontSize: 12, margin: "4px 0 0" }} role="alert">{err}</p>}
+              <button className="auth-submit" type="submit" disabled={busy}>{busy ? "Sending…" : "Send reset link"}</button>
+            </form>
+            <button className="admin-secondary" type="button" onClick={() => go("signin")}>Back to sign in</button>
+          </>
+        )}
+      </AuthShell>
+    );
+  }
+
   return (
-    <div className="auth-prototype">
-      <div className="auth-card">
-        <span className="eyebrow" style={{ color: "var(--gold)" }}>KLOWN FOR RESTAURANTS</span>
-        <h1>Owner sign in</h1>
-        <p>
-          {mode === "signin"
-            ? "Sign in to manage your restaurant on Klown — payments, theme, payouts and support."
-            : "Create your owner account with the email your restaurant was invited on."}
-        </p>
-        <form onSubmit={submit}>
-          <input type="email" required placeholder="you@restaurant.com" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
-          <input type="password" required placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={mode === "signin" ? "current-password" : "new-password"} />
-          {err && <p style={{ color: "#e6a08c", fontSize: 12, margin: "4px 0 0" }} role="alert">{err}</p>}
-          <button className="auth-submit" type="submit" disabled={busy}>
-            {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account & sign in"}
-          </button>
-        </form>
-        <button className="admin-secondary" type="button" onClick={() => { setMode(mode === "signin" ? "register" : "signin"); setErr(null); }}>
-          {mode === "signin" ? "First time? Create your owner account" : "Have an account? Sign in"}
+    <AuthShell>
+      <h1>{mode === "signin" ? "Owner sign in" : "Create account"}</h1>
+      <p>
+        {mode === "signin"
+          ? "Sign in to manage your restaurant on Klown — payments, theme, payouts and support."
+          : "Create your owner account with the email your restaurant was invited on."}
+      </p>
+      <form onSubmit={submit}>
+        <input type="email" required placeholder="you@restaurant.com" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+        <input type="password" required placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={mode === "signin" ? "current-password" : "new-password"} />
+        {err && <p style={{ color: "#e6a08c", fontSize: 12, margin: "4px 0 0" }} role="alert">{err}</p>}
+        <button className="auth-submit" type="submit" disabled={busy}>
+          {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account & sign in"}
         </button>
-      </div>
-    </div>
+      </form>
+      {mode === "signin" && (
+        <button className="admin-secondary" type="button" onClick={() => go("forgot")}>Forgot password?</button>
+      )}
+      <button className="admin-secondary" type="button" onClick={() => go(mode === "signin" ? "register" : "signin")}>
+        {mode === "signin" ? "First time? Create your owner account" : "Have an account? Sign in"}
+      </button>
+    </AuthShell>
   );
 }
 
 function NotLinked({ email, onSignOut }: { email: string | null; onSignOut: () => void }) {
   return (
-    <div className="auth-prototype">
-      <div className="auth-card">
-        <span className="eyebrow" style={{ color: "var(--gold)" }}>KLOWN FOR RESTAURANTS</span>
-        <h1>Not linked yet</h1>
-        <p>
-          {email ? <>The account <b>{email}</b> isn't linked to a restaurant yet.</> : "This account isn't linked to a restaurant yet."}{" "}
-          Ask the Klown team to invite this email, then sign in again.
-        </p>
-        <button className="auth-submit" type="button" onClick={onSignOut}>Sign out</button>
-      </div>
-    </div>
+    <AuthShell>
+      <h1>Not linked yet</h1>
+      <p>
+        {email ? <>The account <b>{email}</b> isn't linked to a restaurant yet.</> : "This account isn't linked to a restaurant yet."}{" "}
+        Ask the Klown team to invite this email, then sign in again.
+      </p>
+      <button className="auth-submit" type="button" onClick={onSignOut}>Sign out</button>
+    </AuthShell>
   );
 }
 
