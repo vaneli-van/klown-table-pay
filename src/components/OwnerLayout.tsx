@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { Toast, useToast } from "@/components/prototype";
 import { ownerContext, titleCase, type OwnerContext as OwnerCtxData } from "@/lib/owner-api";
 import "../owner.css";
+import OwnerNotifications from "@/components/OwnerNotifications";
 
 const NAV = [
   { to: "/owner", label: "Payments" },
@@ -216,6 +217,7 @@ export default function OwnerLayout({ title, children }: { title: string; childr
             <button className="mobile-menu" aria-label="Open menu" onClick={() => setOpen((v) => !v)}>☰</button>
             <div><span className="ops-breadcrumb">{ctx.name}{ctx.city ? " · " + ctx.city : ""}</span><h1>{title}</h1></div>
             <div className="ops-top-actions">
+              <OwnerNotifications restaurantId={ctx.restaurant_id} />
               <button className="gold-button">{roleText}</button>
               <button className="outline-button" onClick={signOut}>Sign out</button>
             </div>
