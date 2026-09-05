@@ -171,21 +171,6 @@ export const ownerBranding = () => rpc<OwnerBranding>("owner_branding");
 export const ownerPayouts = () => rpc<Payouts>("owner_payouts");
 export const ownerTickets = () => rpc<Ticket[]>("owner_tickets");
 
-export type OwnerAnalytics = {
-  range: { from: string; to: string; days: number };
-  funnel: { visits: number; viewed_menu: number; viewed_bill: number; reached_checkout: number; payments_started: number; payments_succeeded: number; revenue_pesewas: number };
-  daily: { day: string; visits: number; payments: number; revenue_pesewas: number }[];
-  by_hour: { hour: number; visits: number; payments: number }[];
-  by_table: { table_label: string; visits: number; payments: number; revenue_pesewas: number }[];
-  time_on_screen: { screen: string; avg_seconds: number; views: number }[];
-  avg_time_to_pay_seconds: number | null;
-  split_usage: { sessions_total: number; sessions_split: number; pct: number };
-  tip: { total_tips_pesewas: number; avg_pct: number };
-  repeat: { total_visitors: number; returning_visitors: number; pct: number };
-  method_split: { method: string; count: number; revenue_pesewas: number }[];
-};
-export const ownerAnalytics = (days = 7) => rpc<OwnerAnalytics>("owner_analytics", { p_days: days });
-
 export const ownerSaveBranding = (b: {
   logo_url: string | null;
   hero_url: string | null;

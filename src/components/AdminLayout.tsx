@@ -11,6 +11,7 @@ const NAV = [
   { to: "/admin/menus", label: "Menus" },
   { to: "/admin/tables-devices", label: "Tables & Devices" },
   { to: "/admin/bills-payments", label: "Bills & Payments" },
+  { to: "/admin/analytics", label: "Analytics" },
   { to: "/admin/members", label: "Members" },
   { to: "/admin/tiers", label: "Tiers" },
   { to: "/admin/points", label: "Points" },
