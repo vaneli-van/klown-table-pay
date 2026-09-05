@@ -10,6 +10,7 @@ import OwnerNotifications from "@/components/OwnerNotifications";
 
 const NAV = [
   { to: "/owner", label: "Payments" },
+  { to: "/owner/analytics", label: "Analytics" },
   { to: "/owner/theme", label: "Theme" },
   { to: "/owner/menus", label: "Menu Studio" },
   { to: "/owner/integrations", label: "Integrations" },

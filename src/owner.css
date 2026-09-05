@@ -7,6 +7,8 @@
 
 /* metrics: owner pages use a 4-up row (the shared grid is 6-up) */
 .metrics-grid.own-metrics-4 { grid-template-columns: repeat(4, 1fr); }
+.metrics-grid.own-metrics-3 { grid-template-columns: repeat(3, 1fr); }
+.metrics-grid.own-metrics-2 { grid-template-columns: repeat(2, 1fr); }
 
 /* payments: method split with proportion bars */
 .own-method-legend { gap: 20px; margin-top: 22px; }
@@ -72,5 +74,7 @@
 @media (max-width: 860px) {
   .own-theme-grid { grid-template-columns: 1fr; }
   .metrics-grid.own-metrics-4 { grid-template-columns: repeat(2, 1fr); }
+  .metrics-grid.own-metrics-3 { grid-template-columns: repeat(2, 1fr); }
+  .metrics-grid.own-metrics-2 { grid-template-columns: repeat(2, 1fr); }
   .own-preview-panel { position: static; }
 }
