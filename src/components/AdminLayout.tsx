@@ -128,7 +128,7 @@ export default function AdminLayout({ title, children }: { title: string; childr
     <div className="ops-app">
       <PaymentAlerts />
       <aside className={open ? "ops-sidebar is-open" : "ops-sidebar"}>
-        <div className="ops-brand" style={{ paddingTop: 2 }}><img src="/blackbird-logo.png" alt="Klown" style={{ height: 20, width: "auto" }} /></div>
+        <div className="ops-brand" style={{ paddingTop: 2 }}><img src="/klown-logo.png" alt="Klown" style={{ height: 20, width: "auto" }} /></div>
         <nav>
           {NAV.map((item) => (
             <Link key={item.to} to={item.to} className={isActive(item.to) ? "active" : undefined} onClick={() => setOpen(false)}>{item.label}</Link>

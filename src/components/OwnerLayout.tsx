@@ -199,7 +199,7 @@ export default function OwnerLayout({ title, children }: { title: string; childr
     <OwnerContextCtx.Provider value={value}>
       <div className="ops-app">
         <aside className={open ? "ops-sidebar is-open" : "ops-sidebar"}>
-          <div className="ops-brand">Klown<b>.</b><button aria-label="Close menu" onClick={() => setOpen(false)}>×</button></div>
+          <div className="ops-brand"><img src="/klown-logo.png" alt="Klown" style={{ height: 22, width: "auto" }} /><button aria-label="Close menu" onClick={() => setOpen(false)}>×</button></div>
           <nav>
             {NAV.map((item) => (
               <Link key={item.to} to={item.to} className={isActive(item.to) ? "active" : undefined} onClick={() => setOpen(false)}>{item.label}</Link>
