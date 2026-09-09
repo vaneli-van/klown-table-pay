@@ -208,6 +208,18 @@ export const ownerSetSchedule = (schedule: string) => rpc<Payouts>("owner_set_sc
 export const ownerNotifyPhones = () => rpc<{ phones: string[] }>("owner_notify_phones");
 export const ownerSaveNotifyPhones = (phones: string[]) => rpc<{ phones: string[] }>("owner_save_notify_phones", { p_phones: phones });
 
+// ---- Settings: profile + team ----
+export type OwnerProfile = { restaurant_id: string; name: string; city: string | null; contact_phone: string | null; address: string | null };
+export const ownerProfile = () => rpc<OwnerProfile>("owner_profile");
+export const ownerSaveProfile = (p: { name: string; city: string; contact_phone: string; address: string }) =>
+  rpc<OwnerProfile>("owner_save_profile", { p_name: p.name, p_city: p.city, p_contact_phone: p.contact_phone, p_address: p.address });
+
+export type TeamMember = { email: string; role: string; status: "active" | "invited"; linked: boolean; created_at: string; is_self: boolean };
+export const ownerTeam = () => rpc<TeamMember[]>("owner_team");
+export const ownerInviteMember = (email: string, role = "owner") =>
+  rpc<{ ok: boolean; status: string; email?: string; role?: string }>("owner_invite_member", { p_email: email, p_role: role });
+export const ownerRemoveMember = (email: string) => rpc<{ ok: boolean }>("owner_remove_member", { p_email: email });
+
 export const ownerCreateTicket = (t: { category: string; priority: string; subject: string; body: string }) =>
   rpc<{ ref: string; status: string }>("owner_create_ticket", {
     p_category: t.category,

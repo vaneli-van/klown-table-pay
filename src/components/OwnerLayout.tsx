@@ -16,6 +16,7 @@ const NAV = [
   { to: "/owner/integrations", label: "Integrations" },
   { to: "/owner/payouts", label: "Payouts" },
   { to: "/owner/bank", label: "Payout account" },
+  { to: "/owner/settings", label: "Settings" },
 ];
 const BOTTOM = [{ to: "/owner/support", label: "Support" }];
 
