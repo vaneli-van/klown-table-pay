@@ -331,7 +331,9 @@ function ItemDialog({ state, currency, menuId, sections, onClose, onSaved, run }
   const { restaurantId, show } = useOwner();
   const it = state.item;
   const [name, setName] = useState(it?.name ?? "");
-  const [sectionName, setSectionName] = useState(() => sections.find((x) => x.id === (it?.section_id ?? state.sectionId))?.name ?? "");
+  const NEW_SECTION = "__new__";
+  const [sectionId, setSectionId] = useState<string>(it?.section_id ?? state.sectionId ?? (sections[0]?.id ?? ""));
+  const [newSection, setNewSection] = useState("");
   const [price, setPrice] = useState(priceText(it?.price_pesewas, it?.price_display, currency).replace(/^GH₵/, "") || (it?.price_display ?? ""));
   const [description, setDescription] = useState(it?.description ?? "");
   const [extras, setExtras] = useState(it?.extras ?? "");
@@ -365,25 +367,30 @@ function ItemDialog({ state, currency, menuId, sections, onClose, onSaved, run }
       onSaved(undefined, true);
       return;
     }
-    // Resolve the section the owner typed: match an existing one, else create it.
-    const typed = sectionName.trim();
+    // Resolve the chosen section: an existing id, or a new section to create.
     let targetId: string | null = state.sectionId;
     let sectionsNow: StudioSection[] = sections;
-    if (typed) {
-      const match = sections.find((x) => x.name.trim().toLowerCase() === typed.toLowerCase());
-      if (match) {
-        targetId = match.id;
-      } else {
-        const created = await run(studioSectionUpsert(menuId, { name: typed }), { tree: false });
-        if (created) { sectionsNow = created.sections; targetId = created.sections.find((x) => x.name.trim().toLowerCase() === typed.toLowerCase())?.id ?? targetId; }
+    let targetLabel = "";
+    if (sectionId === NEW_SECTION) {
+      const nm = newSection.trim();
+      if (nm) {
+        const match = sections.find((x) => x.name.trim().toLowerCase() === nm.toLowerCase());
+        if (match) { targetId = match.id; targetLabel = match.name; }
+        else {
+          const created = await run(studioSectionUpsert(menuId, { name: nm }), { tree: false });
+          if (created) { sectionsNow = created.sections; const cs = created.sections.find((x) => x.name.trim().toLowerCase() === nm.toLowerCase()); if (cs) { targetId = cs.id; targetLabel = cs.name; } }
+        }
       }
+    } else if (sectionId) {
+      targetId = sectionId;
+      targetLabel = sections.find((x) => x.id === sectionId)?.name ?? "";
     }
     if (it) {
       let t = await run(studioItemUpsert(it.section_id, payload), { ok: "Item updated" });
       if (t) sectionsNow = t.sections;
       if (targetId && targetId !== it.section_id) {
         const target = sectionsNow.find((x) => x.id === targetId);
-        const moved = await run(studioItemMove(it.id, targetId, target ? target.items.length : 0), { ok: "Moved to " + typed });
+        const moved = await run(studioItemMove(it.id, targetId, target ? target.items.length : 0), { ok: "Moved to " + targetLabel });
         if (moved) t = moved;
       }
       onSaved(t, false);
@@ -403,9 +410,14 @@ function ItemDialog({ state, currency, menuId, sections, onClose, onSaved, run }
         </div>
         {!state.catalogue && (
           <div className="st-field"><label>Section</label>
-            <input list="st-section-list" value={sectionName} onChange={(e) => setSectionName(e.target.value)} placeholder="Starters" />
-            <datalist id="st-section-list">{sections.map((s) => <option key={s.id} value={s.name} />)}</datalist>
-            <small className="st-hint">Type an existing section to move this item there, or a new name to create one.</small>
+            <select value={sectionId} onChange={(e) => setSectionId(e.target.value)}>
+              {sections.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              <option value={NEW_SECTION}>+ New section…</option>
+            </select>
+            {sectionId === NEW_SECTION && (
+              <input value={newSection} onChange={(e) => setNewSection(e.target.value)} placeholder="New section name" style={{ marginTop: 8 }} autoFocus />
+            )}
+            <small className="st-hint">Pick a section to move this item there, or create a new one.</small>
           </div>
         )}
         <div className="st-field"><label>Description</label><textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Smoked tomato rice, mozzarella, green pepper relish." /></div>

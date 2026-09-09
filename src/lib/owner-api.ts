@@ -205,6 +205,9 @@ export const ownerSaveBank = (a: {
 
 export const ownerSetSchedule = (schedule: string) => rpc<Payouts>("owner_set_schedule", { p_schedule: schedule });
 
+export const ownerNotifyPhones = () => rpc<{ phones: string[] }>("owner_notify_phones");
+export const ownerSaveNotifyPhones = (phones: string[]) => rpc<{ phones: string[] }>("owner_save_notify_phones", { p_phones: phones });
+
 export const ownerCreateTicket = (t: { category: string; priority: string; subject: string; body: string }) =>
   rpc<{ ref: string; status: string }>("owner_create_ticket", {
     p_category: t.category,

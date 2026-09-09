@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import OwnerLayout, { useOwner } from "@/components/OwnerLayout";
 import {
   ownerPaymentsSummary,
   ownerRecentPayments,
+  ownerNotifyPhones,
+  ownerSaveNotifyPhones,
   cedis,
   cedisShort,
   methodLabel,
@@ -125,6 +128,8 @@ function PaymentsBody() {
         </div>
       </div>
 
+      <AlertNumbers />
+
       <div className="panel table-panel">
         <div className="panel-heading">
           <div><span className="panel-kicker">Activity</span><h2>Recent payments</h2></div>
@@ -157,3 +162,58 @@ function PaymentsBody() {
     </>
   );
 }
+
+function toLocal(m: string): string {
+  return m && m.startsWith("233") && m.length === 12 ? "0" + m.slice(3) : m;
+}
+
+function AlertNumbers() {
+  const { restaurantId, show } = useOwner();
+  const qc = useQueryClient();
+  const { data } = useQuery<{ phones: string[] }>({
+    queryKey: ["owner_notify_phones", restaurantId],
+    enabled: !!restaurantId,
+    queryFn: ownerNotifyPhones,
+  });
+  const [nums, setNums] = useState<string[]>(["", "", ""]);
+  const [saving, setSaving] = useState(false);
+  useEffect(() => {
+    const p = data?.phones ?? [];
+    setNums([toLocal(p[0] ?? ""), toLocal(p[1] ?? ""), toLocal(p[2] ?? "")]);
+  }, [data]);
+  const set = (i: number, v: string) => setNums((a) => a.map((x, j) => (j === i ? v : x)));
+  const save = async () => {
+    setSaving(true);
+    try {
+      const res = await ownerSaveNotifyPhones(nums.map((n) => n.trim()).filter(Boolean));
+      const p = res?.phones ?? [];
+      setNums([toLocal(p[0] ?? ""), toLocal(p[1] ?? ""), toLocal(p[2] ?? "")]);
+      show(p.length ? `Saved ${p.length} alert number${p.length === 1 ? "" : "s"}` : "Alert numbers cleared");
+      qc.invalidateQueries({ queryKey: ["owner_notify_phones", restaurantId] });
+    } catch (e: any) {
+      show("Couldn't save: " + (e?.message === "not_authorized" ? "not authorised for this restaurant" : e?.message ?? "error"));
+    } finally {
+      setSaving(false);
+    }
+  };
+  return (
+    <div className="panel">
+      <div className="panel-heading">
+        <div><span className="panel-kicker">Notifications</span><h2>SMS payment alerts</h2></div>
+      </div>
+      <div className="detail-note"><span>Get a text the moment a table or counter pays via Klown, with the items and amount. Add up to 3 Ghana numbers.</span></div>
+      <div className="own-form" style={{ marginTop: 14 }}>
+        {[0, 1, 2].map((i) => (
+          <div className="own-field" key={i}>
+            <label>Number {i + 1}{i > 0 ? " (optional)" : ""}</label>
+            <input className="wide-input" style={{ margin: 0 }} inputMode="tel" placeholder="024 000 0000" value={nums[i]} onChange={(e) => set(i, e.target.value)} />
+          </div>
+        ))}
+        <div className="own-actions">
+          <button className="gold-button" type="button" disabled={saving} onClick={save}>{saving ? "Saving…" : "Save alert numbers"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
