@@ -292,6 +292,8 @@ function EditorBody({ menuId }: { menuId: string }) {
         <ItemDialog
           state={itemDlg}
           currency={currency}
+          menuId={menuId}
+          sections={sections}
           onClose={() => setItemDlg({ open: false, sectionId: null, item: null, catalogue: false })}
           onSaved={(t, catRefresh) => { if (t) setTree(t); if (catRefresh) refreshCatalogue(); setItemDlg({ open: false, sectionId: null, item: null, catalogue: false }); }}
           run={run}
@@ -320,8 +322,8 @@ function EditorBody({ menuId }: { menuId: string }) {
 }
 
 // ---------- Item dialog ----------
-function ItemDialog({ state, currency, onClose, onSaved, run }: {
-  state: ItemDialogState; currency: string; onClose: () => void;
+function ItemDialog({ state, currency, menuId, sections, onClose, onSaved, run }: {
+  state: ItemDialogState; currency: string; menuId: string; sections: StudioSection[]; onClose: () => void;
   onSaved: (tree: StudioTree | undefined, catRefresh: boolean) => void;
   run: <T>(p: Promise<T>, opts?: { tree?: boolean; ok?: string }) => Promise<T | undefined>;
 }) {
@@ -329,6 +331,7 @@ function ItemDialog({ state, currency, onClose, onSaved, run }: {
   const { restaurantId, show } = useOwner();
   const it = state.item;
   const [name, setName] = useState(it?.name ?? "");
+  const [sectionName, setSectionName] = useState(() => sections.find((x) => x.id === (it?.section_id ?? state.sectionId))?.name ?? "");
   const [price, setPrice] = useState(priceText(it?.price_pesewas, it?.price_display, currency).replace(/^GH₵/, "") || (it?.price_display ?? ""));
   const [description, setDescription] = useState(it?.description ?? "");
   const [extras, setExtras] = useState(it?.extras ?? "");
@@ -360,9 +363,33 @@ function ItemDialog({ state, currency, onClose, onSaved, run }: {
     if (state.catalogue) {
       await run(studioCatalogueUpsert(payload), { tree: false, ok: "Saved to food items" });
       onSaved(undefined, true);
-    } else if (state.sectionId) {
-      const t = await run(studioItemUpsert(state.sectionId, payload), { ok: it ? "Item updated" : "Item added" });
-      onSaved(t as any, false);
+      return;
+    }
+    // Resolve the section the owner typed: match an existing one, else create it.
+    const typed = sectionName.trim();
+    let targetId: string | null = state.sectionId;
+    let sectionsNow: StudioSection[] = sections;
+    if (typed) {
+      const match = sections.find((x) => x.name.trim().toLowerCase() === typed.toLowerCase());
+      if (match) {
+        targetId = match.id;
+      } else {
+        const created = await run(studioSectionUpsert(menuId, { name: typed }), { tree: false });
+        if (created) { sectionsNow = created.sections; targetId = created.sections.find((x) => x.name.trim().toLowerCase() === typed.toLowerCase())?.id ?? targetId; }
+      }
+    }
+    if (it) {
+      let t = await run(studioItemUpsert(it.section_id, payload), { ok: "Item updated" });
+      if (t) sectionsNow = t.sections;
+      if (targetId && targetId !== it.section_id) {
+        const target = sectionsNow.find((x) => x.id === targetId);
+        const moved = await run(studioItemMove(it.id, targetId, target ? target.items.length : 0), { ok: "Moved to " + typed });
+        if (moved) t = moved;
+      }
+      onSaved(t, false);
+    } else {
+      const addTo = targetId ?? state.sectionId;
+      if (addTo) { const t = await run(studioItemUpsert(addTo, payload), { ok: "Item added" }); onSaved(t, false); }
     }
   };
 
@@ -374,6 +401,13 @@ function ItemDialog({ state, currency, onClose, onSaved, run }: {
           <div className="st-field"><label>Name</label><input value={name} onChange={(e) => setName(e.target.value)} autoFocus placeholder="Jollof arancini" /></div>
           <div className="st-field"><label>Price</label><input value={price} onChange={(e) => setPrice(e.target.value)} placeholder="70  ·  or “Market”" /></div>
         </div>
+        {!state.catalogue && (
+          <div className="st-field"><label>Section</label>
+            <input list="st-section-list" value={sectionName} onChange={(e) => setSectionName(e.target.value)} placeholder="Starters" />
+            <datalist id="st-section-list">{sections.map((s) => <option key={s.id} value={s.name} />)}</datalist>
+            <small className="st-hint">Type an existing section to move this item there, or a new name to create one.</small>
+          </div>
+        )}
         <div className="st-field"><label>Description</label><textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Smoked tomato rice, mozzarella, green pepper relish." /></div>
         <div className="st-field"><label>Extras</label><input value={extras} onChange={(e) => setExtras(e.target.value)} placeholder="Add prawns +25" /></div>
         <div className="st-field"><label>Photo</label>

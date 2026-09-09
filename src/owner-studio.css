@@ -65,6 +65,7 @@
 .st-dialog h3{margin:0 0 16px;font:600 18px/1.2 "Helvetica Neue",Arial}
 .st-dialog .st-field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
 .st-dialog .st-field label{font:700 10px/1 Arial;letter-spacing:.1em;text-transform:uppercase;color:#77736c}
+.st-dialog .st-field .st-hint{display:block;margin-top:6px;font:400 11px/1.4 Arial;letter-spacing:0;text-transform:none;color:#8a857c}
 .st-dialog .st-field input,.st-dialog .st-field textarea,.st-dialog .st-field select{border:1px solid #e6e1d6;border-radius:2px;padding:10px;font-size:14px;background:#fff;width:100%;box-sizing:border-box}
 .st-dialog .st-field textarea{min-height:70px;resize:vertical}
 .st-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
