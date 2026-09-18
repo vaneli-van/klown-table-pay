@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminActivityLogRouteImport } from './routes/admin.activity-log'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as AdminBillsPaymentsRouteImport } from './routes/admin.bills-payments'
 import { Route as AdminBrandingRouteImport } from './routes/admin.branding'
 import { Route as AdminMembersRouteImport } from './routes/admin.members'
@@ -27,7 +28,18 @@ import { Route as AdminSubscribersRouteImport } from './routes/admin.subscribers
 import { Route as AdminSupportRouteImport } from './routes/admin.support'
 import { Route as AdminTablesDevicesRouteImport } from './routes/admin.tables-devices'
 import { Route as AdminTiersRouteImport } from './routes/admin.tiers'
+import { Route as OwnerIndexRouteImport } from './routes/owner.index'
+import { Route as OwnerBankRouteImport } from './routes/owner.bank'
+import { Route as OwnerIntegrationsRouteImport } from './routes/owner.integrations'
+import { Route as OwnerOrdersRouteImport } from './routes/owner.orders'
+import { Route as OwnerPaymentsRouteImport } from './routes/owner.payments'
+import { Route as OwnerPayoutsRouteImport } from './routes/owner.payouts'
+import { Route as OwnerSettingsRouteImport } from './routes/owner.settings'
+import { Route as OwnerSupportRouteImport } from './routes/owner.support'
+import { Route as OwnerThemeRouteImport } from './routes/owner.theme'
 import { Route as AdminAuthScreenRouteImport } from './routes/admin.auth.$screen'
+import { Route as OwnerMenusIndexRouteImport } from './routes/owner.menus.index'
+import { Route as OwnerMenusMenuIdRouteImport } from './routes/owner.menus.$menuId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -42,6 +54,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const AdminActivityLogRoute = AdminActivityLogRouteImport.update({
   id: '/admin/activity-log',
   path: '/admin/activity-log',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/admin/analytics',
+  path: '/admin/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminBillsPaymentsRoute = AdminBillsPaymentsRouteImport.update({
@@ -119,15 +136,71 @@ const AdminTiersRoute = AdminTiersRouteImport.update({
   path: '/admin/tiers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OwnerIndexRoute = OwnerIndexRouteImport.update({
+  id: '/owner/',
+  path: '/owner/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OwnerBankRoute = OwnerBankRouteImport.update({
+  id: '/owner/bank',
+  path: '/owner/bank',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OwnerIntegrationsRoute = OwnerIntegrationsRouteImport.update({
+  id: '/owner/integrations',
+  path: '/owner/integrations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OwnerOrdersRoute = OwnerOrdersRouteImport.update({
+  id: '/owner/orders',
+  path: '/owner/orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OwnerPaymentsRoute = OwnerPaymentsRouteImport.update({
+  id: '/owner/payments',
+  path: '/owner/payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OwnerPayoutsRoute = OwnerPayoutsRouteImport.update({
+  id: '/owner/payouts',
+  path: '/owner/payouts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OwnerSettingsRoute = OwnerSettingsRouteImport.update({
+  id: '/owner/settings',
+  path: '/owner/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OwnerSupportRoute = OwnerSupportRouteImport.update({
+  id: '/owner/support',
+  path: '/owner/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OwnerThemeRoute = OwnerThemeRouteImport.update({
+  id: '/owner/theme',
+  path: '/owner/theme',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminAuthScreenRoute = AdminAuthScreenRouteImport.update({
   id: '/admin/auth/$screen',
   path: '/admin/auth/$screen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OwnerMenusIndexRoute = OwnerMenusIndexRouteImport.update({
+  id: '/owner/menus/',
+  path: '/owner/menus/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OwnerMenusMenuIdRoute = OwnerMenusMenuIdRouteImport.update({
+  id: '/owner/menus/$menuId',
+  path: '/owner/menus/$menuId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin/activity-log': typeof AdminActivityLogRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/bills-payments': typeof AdminBillsPaymentsRoute
   '/admin/branding': typeof AdminBrandingRoute
   '/admin/members': typeof AdminMembersRoute
@@ -143,12 +216,24 @@ export interface FileRoutesByFullPath {
   '/admin/support': typeof AdminSupportRoute
   '/admin/tables-devices': typeof AdminTablesDevicesRoute
   '/admin/tiers': typeof AdminTiersRoute
+  '/owner/bank': typeof OwnerBankRoute
+  '/owner/integrations': typeof OwnerIntegrationsRoute
+  '/owner/orders': typeof OwnerOrdersRoute
+  '/owner/payments': typeof OwnerPaymentsRoute
+  '/owner/payouts': typeof OwnerPayoutsRoute
+  '/owner/settings': typeof OwnerSettingsRoute
+  '/owner/support': typeof OwnerSupportRoute
+  '/owner/theme': typeof OwnerThemeRoute
   '/admin/': typeof AdminIndexRoute
+  '/owner/': typeof OwnerIndexRoute
   '/admin/auth/$screen': typeof AdminAuthScreenRoute
+  '/owner/menus/$menuId': typeof OwnerMenusMenuIdRoute
+  '/owner/menus/': typeof OwnerMenusIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin/activity-log': typeof AdminActivityLogRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/bills-payments': typeof AdminBillsPaymentsRoute
   '/admin/branding': typeof AdminBrandingRoute
   '/admin/members': typeof AdminMembersRoute
@@ -164,13 +249,25 @@ export interface FileRoutesByTo {
   '/admin/support': typeof AdminSupportRoute
   '/admin/tables-devices': typeof AdminTablesDevicesRoute
   '/admin/tiers': typeof AdminTiersRoute
+  '/owner/bank': typeof OwnerBankRoute
+  '/owner/integrations': typeof OwnerIntegrationsRoute
+  '/owner/orders': typeof OwnerOrdersRoute
+  '/owner/payments': typeof OwnerPaymentsRoute
+  '/owner/payouts': typeof OwnerPayoutsRoute
+  '/owner/settings': typeof OwnerSettingsRoute
+  '/owner/support': typeof OwnerSupportRoute
+  '/owner/theme': typeof OwnerThemeRoute
   '/admin': typeof AdminIndexRoute
+  '/owner': typeof OwnerIndexRoute
   '/admin/auth/$screen': typeof AdminAuthScreenRoute
+  '/owner/menus/$menuId': typeof OwnerMenusMenuIdRoute
+  '/owner/menus': typeof OwnerMenusIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin/activity-log': typeof AdminActivityLogRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/bills-payments': typeof AdminBillsPaymentsRoute
   '/admin/branding': typeof AdminBrandingRoute
   '/admin/members': typeof AdminMembersRoute
@@ -186,14 +283,26 @@ export interface FileRoutesById {
   '/admin/support': typeof AdminSupportRoute
   '/admin/tables-devices': typeof AdminTablesDevicesRoute
   '/admin/tiers': typeof AdminTiersRoute
+  '/owner/bank': typeof OwnerBankRoute
+  '/owner/integrations': typeof OwnerIntegrationsRoute
+  '/owner/orders': typeof OwnerOrdersRoute
+  '/owner/payments': typeof OwnerPaymentsRoute
+  '/owner/payouts': typeof OwnerPayoutsRoute
+  '/owner/settings': typeof OwnerSettingsRoute
+  '/owner/support': typeof OwnerSupportRoute
+  '/owner/theme': typeof OwnerThemeRoute
   '/admin/': typeof AdminIndexRoute
+  '/owner/': typeof OwnerIndexRoute
   '/admin/auth/$screen': typeof AdminAuthScreenRoute
+  '/owner/menus/$menuId': typeof OwnerMenusMenuIdRoute
+  '/owner/menus/': typeof OwnerMenusIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/admin/activity-log'
+    | '/admin/analytics'
     | '/admin/bills-payments'
     | '/admin/branding'
     | '/admin/members'
@@ -209,12 +318,24 @@ export interface FileRouteTypes {
     | '/admin/support'
     | '/admin/tables-devices'
     | '/admin/tiers'
+    | '/owner/bank'
+    | '/owner/integrations'
+    | '/owner/orders'
+    | '/owner/payments'
+    | '/owner/payouts'
+    | '/owner/settings'
+    | '/owner/support'
+    | '/owner/theme'
     | '/admin/'
+    | '/owner/'
     | '/admin/auth/$screen'
+    | '/owner/menus/$menuId'
+    | '/owner/menus/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin/activity-log'
+    | '/admin/analytics'
     | '/admin/bills-payments'
     | '/admin/branding'
     | '/admin/members'
@@ -230,12 +351,24 @@ export interface FileRouteTypes {
     | '/admin/support'
     | '/admin/tables-devices'
     | '/admin/tiers'
+    | '/owner/bank'
+    | '/owner/integrations'
+    | '/owner/orders'
+    | '/owner/payments'
+    | '/owner/payouts'
+    | '/owner/settings'
+    | '/owner/support'
+    | '/owner/theme'
     | '/admin'
+    | '/owner'
     | '/admin/auth/$screen'
+    | '/owner/menus/$menuId'
+    | '/owner/menus'
   id:
     | '__root__'
     | '/'
     | '/admin/activity-log'
+    | '/admin/analytics'
     | '/admin/bills-payments'
     | '/admin/branding'
     | '/admin/members'
@@ -251,13 +384,25 @@ export interface FileRouteTypes {
     | '/admin/support'
     | '/admin/tables-devices'
     | '/admin/tiers'
+    | '/owner/bank'
+    | '/owner/integrations'
+    | '/owner/orders'
+    | '/owner/payments'
+    | '/owner/payouts'
+    | '/owner/settings'
+    | '/owner/support'
+    | '/owner/theme'
     | '/admin/'
+    | '/owner/'
     | '/admin/auth/$screen'
+    | '/owner/menus/$menuId'
+    | '/owner/menus/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminActivityLogRoute: typeof AdminActivityLogRoute
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminBillsPaymentsRoute: typeof AdminBillsPaymentsRoute
   AdminBrandingRoute: typeof AdminBrandingRoute
   AdminMembersRoute: typeof AdminMembersRoute
@@ -273,8 +418,19 @@ export interface RootRouteChildren {
   AdminSupportRoute: typeof AdminSupportRoute
   AdminTablesDevicesRoute: typeof AdminTablesDevicesRoute
   AdminTiersRoute: typeof AdminTiersRoute
+  OwnerBankRoute: typeof OwnerBankRoute
+  OwnerIntegrationsRoute: typeof OwnerIntegrationsRoute
+  OwnerOrdersRoute: typeof OwnerOrdersRoute
+  OwnerPaymentsRoute: typeof OwnerPaymentsRoute
+  OwnerPayoutsRoute: typeof OwnerPayoutsRoute
+  OwnerSettingsRoute: typeof OwnerSettingsRoute
+  OwnerSupportRoute: typeof OwnerSupportRoute
+  OwnerThemeRoute: typeof OwnerThemeRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  OwnerIndexRoute: typeof OwnerIndexRoute
   AdminAuthScreenRoute: typeof AdminAuthScreenRoute
+  OwnerMenusMenuIdRoute: typeof OwnerMenusMenuIdRoute
+  OwnerMenusIndexRoute: typeof OwnerMenusIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -298,6 +454,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/activity-log'
       fullPath: '/admin/activity-log'
       preLoaderRoute: typeof AdminActivityLogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/admin/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/bills-payments': {
@@ -405,11 +568,88 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTiersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/owner/': {
+      id: '/owner/'
+      path: '/owner'
+      fullPath: '/owner/'
+      preLoaderRoute: typeof OwnerIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/owner/bank': {
+      id: '/owner/bank'
+      path: '/owner/bank'
+      fullPath: '/owner/bank'
+      preLoaderRoute: typeof OwnerBankRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/owner/integrations': {
+      id: '/owner/integrations'
+      path: '/owner/integrations'
+      fullPath: '/owner/integrations'
+      preLoaderRoute: typeof OwnerIntegrationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/owner/orders': {
+      id: '/owner/orders'
+      path: '/owner/orders'
+      fullPath: '/owner/orders'
+      preLoaderRoute: typeof OwnerOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/owner/payments': {
+      id: '/owner/payments'
+      path: '/owner/payments'
+      fullPath: '/owner/payments'
+      preLoaderRoute: typeof OwnerPaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/owner/payouts': {
+      id: '/owner/payouts'
+      path: '/owner/payouts'
+      fullPath: '/owner/payouts'
+      preLoaderRoute: typeof OwnerPayoutsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/owner/settings': {
+      id: '/owner/settings'
+      path: '/owner/settings'
+      fullPath: '/owner/settings'
+      preLoaderRoute: typeof OwnerSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/owner/support': {
+      id: '/owner/support'
+      path: '/owner/support'
+      fullPath: '/owner/support'
+      preLoaderRoute: typeof OwnerSupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/owner/theme': {
+      id: '/owner/theme'
+      path: '/owner/theme'
+      fullPath: '/owner/theme'
+      preLoaderRoute: typeof OwnerThemeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/auth/$screen': {
       id: '/admin/auth/$screen'
       path: '/admin/auth/$screen'
       fullPath: '/admin/auth/$screen'
       preLoaderRoute: typeof AdminAuthScreenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/owner/menus/': {
+      id: '/owner/menus/'
+      path: '/owner/menus'
+      fullPath: '/owner/menus/'
+      preLoaderRoute: typeof OwnerMenusIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/owner/menus/$menuId': {
+      id: '/owner/menus/$menuId'
+      path: '/owner/menus/$menuId'
+      fullPath: '/owner/menus/$menuId'
+      preLoaderRoute: typeof OwnerMenusMenuIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -418,6 +658,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminActivityLogRoute: AdminActivityLogRoute,
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminBillsPaymentsRoute: AdminBillsPaymentsRoute,
   AdminBrandingRoute: AdminBrandingRoute,
   AdminMembersRoute: AdminMembersRoute,
@@ -433,8 +674,19 @@ const rootRouteChildren: RootRouteChildren = {
   AdminSupportRoute: AdminSupportRoute,
   AdminTablesDevicesRoute: AdminTablesDevicesRoute,
   AdminTiersRoute: AdminTiersRoute,
+  OwnerBankRoute: OwnerBankRoute,
+  OwnerIntegrationsRoute: OwnerIntegrationsRoute,
+  OwnerOrdersRoute: OwnerOrdersRoute,
+  OwnerPaymentsRoute: OwnerPaymentsRoute,
+  OwnerPayoutsRoute: OwnerPayoutsRoute,
+  OwnerSettingsRoute: OwnerSettingsRoute,
+  OwnerSupportRoute: OwnerSupportRoute,
+  OwnerThemeRoute: OwnerThemeRoute,
   AdminIndexRoute: AdminIndexRoute,
+  OwnerIndexRoute: OwnerIndexRoute,
   AdminAuthScreenRoute: AdminAuthScreenRoute,
+  OwnerMenusMenuIdRoute: OwnerMenusMenuIdRoute,
+  OwnerMenusIndexRoute: OwnerMenusIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
