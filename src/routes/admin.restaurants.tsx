@@ -228,7 +228,7 @@ function Page() {
               {tab === "Menu" && (<>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
                   <h3 style={{ margin: 0 }}>Menu</h3>
-                  <Link className="gold-button" to="/admin/menus/studio" search={{ restaurant: selected.id }}>Open in Menu Studio</Link>
+                  <Link className="gold-button" to="/admin/menu-studio" search={{ restaurant: selected.id }}>Open in Menu Studio</Link>
                 </div>
                 {(detail?.menu ?? []).length === 0 && <div className="detail-note"><span>No menu published yet.</span></div>}
                 <div className="connection-list">
@@ -304,7 +304,7 @@ function Page() {
             <h3>Manage {confirm.name}</h3>
             <div className="action-list">
               <button onClick={() => { openR(confirm); setConfirm(null); }}>View restaurant <span>›</span></button>
-              <Link to="/admin/menus/studio" search={{ restaurant: confirm.id }}>Build menu in Studio <span>›</span></Link>
+              <Link to="/admin/menu-studio" search={{ restaurant: confirm.id }}>Build menu in Studio <span>›</span></Link>
               <button onClick={() => show("Opened POS connection")}>Connect POS <span>›</span></button>
               <button onClick={() => { show("Pause is disabled on live data in this test"); setConfirm(null); }}>Pause account <span>›</span></button>
             </div>

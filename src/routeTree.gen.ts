@@ -40,8 +40,8 @@ import { Route as OwnerThemeRouteImport } from './routes/owner.theme'
 import { Route as AdminAuthScreenRouteImport } from './routes/admin.auth.$screen'
 import { Route as OwnerMenusIndexRouteImport } from './routes/owner.menus.index'
 import { Route as OwnerMenusMenuIdRouteImport } from './routes/owner.menus.$menuId'
-import { Route as AdminMenusStudioIndexRouteImport } from './routes/admin.menus.studio.index'
-import { Route as AdminMenusStudioMenuIdRouteImport } from './routes/admin.menus.studio.$menuId'
+import { Route as AdminMenusStudioIndexRouteImport } from './routes/admin.menu-studio.index'
+import { Route as AdminMenusStudioMenuIdRouteImport } from './routes/admin.menu-studio.$menuId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -199,13 +199,13 @@ const OwnerMenusMenuIdRoute = OwnerMenusMenuIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminMenusStudioIndexRoute = AdminMenusStudioIndexRouteImport.update({
-  id: '/admin/menus/studio/',
-  path: '/admin/menus/studio/',
+  id: '/admin/menu-studio/',
+  path: '/admin/menu-studio/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminMenusStudioMenuIdRoute = AdminMenusStudioMenuIdRouteImport.update({
-  id: '/admin/menus/studio/$menuId',
-  path: '/admin/menus/studio/$menuId',
+  id: '/admin/menu-studio/$menuId',
+  path: '/admin/menu-studio/$menuId',
   getParentRoute: () => rootRouteImport,
 } as any)
 

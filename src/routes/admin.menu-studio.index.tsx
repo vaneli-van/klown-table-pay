@@ -13,7 +13,7 @@ const TITLE = "Menu Studio";
 
 type RestaurantRow = { id: string; name: string; city: string | null };
 
-export const Route = createFileRoute("/admin/menus/studio/")({
+export const Route = createFileRoute("/admin/menu-studio/")({
   validateSearch: (s: Record<string, unknown>): { restaurant?: string } => ({
     restaurant: typeof s.restaurant === "string" && s.restaurant ? s.restaurant : undefined,
   }),
@@ -64,7 +64,7 @@ function RestaurantPicker() {
       ) : (
         <div className="st-menus-grid">
           {rows.map((r) => (
-            <Link key={r.id} className="st-menu-card" to="/admin/menus/studio" search={{ restaurant: r.id }} style={{ textDecoration: "none", color: "inherit" }}>
+            <Link key={r.id} className="st-menu-card" to="/admin/menu-studio" search={{ restaurant: r.id }} style={{ textDecoration: "none", color: "inherit" }}>
               <h3>{r.name}</h3>
               <span className="st-meta">{r.city ?? "—"}</span>
               <div className="st-card-actions"><span className="gold-button">Open Menu Studio</span></div>
@@ -107,7 +107,7 @@ function MenusForRestaurant({ restaurantId }: { restaurantId: string }) {
     try {
       const tree = await studioMenuCreate(nm.trim(), "manual", restaurantId);
       show("Menu created");
-      navigate({ to: "/admin/menus/studio/$menuId", params: { menuId: tree.menu.id } });
+      navigate({ to: "/admin/menu-studio/$menuId", params: { menuId: tree.menu.id } });
     } catch (e: any) { show("Could not create menu: " + (e?.message ?? "error")); }
     finally { setBusy(false); }
   };
@@ -130,7 +130,7 @@ function MenusForRestaurant({ restaurantId }: { restaurantId: string }) {
       <section className="ops-intro">
         <div>
           <h2>{rname} · Menus</h2>
-          <p>Build and theme the menus diners see at {rname}. <Link to="/admin/menus/studio" search={{ restaurant: undefined }} style={{ textDecoration: "underline" }}>Change restaurant</Link></p>
+          <p>Build and theme the menus diners see at {rname}. <Link to="/admin/menu-studio" search={{ restaurant: undefined }} style={{ textDecoration: "underline" }}>Change restaurant</Link></p>
         </div>
         <button className="gold-button" onClick={create} disabled={busy}>New menu</button>
       </section>
@@ -156,7 +156,7 @@ function MenusForRestaurant({ restaurantId }: { restaurantId: string }) {
               <h3>{m.name}</h3>
               <span className="st-meta">{m.section_count} section{m.section_count === 1 ? "" : "s"} · {m.item_count} item{m.item_count === 1 ? "" : "s"} · updated {shortDate(m.updated_at)}</span>
               <div className="st-card-actions">
-                <Link className="gold-button" to="/admin/menus/studio/$menuId" params={{ menuId: m.id }}>Open editor</Link>
+                <Link className="gold-button" to="/admin/menu-studio/$menuId" params={{ menuId: m.id }}>Open editor</Link>
                 <button className="outline-button" onClick={() => duplicate(m.id)} disabled={busy}>Duplicate</button>
                 <button className="quiet" onClick={() => remove(m)} disabled={busy}>Delete</button>
               </div>
