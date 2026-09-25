@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/AdminLayout";
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/admin/menus")({
 
 type MenuRow = {
   id: string; name: string; pos_source: string | null; sync_health: string | null; status: string | null;
-  last_synced_at: string | null; restaurant_name: string; city: string | null; categories: number; items: number;
+  last_synced_at: string | null; restaurant_name: string; restaurant_id: string; city: string | null; categories: number; items: number;
 };
 const COLS = "1.5fr 1fr .8fr 1fr .9fr 120px";
 
@@ -64,8 +64,8 @@ function Page() {
   return (
     <AdminLayout title={TITLE}>
       <section className="ops-intro">
-        <div><h2>Menu directory</h2><p>Live menus from each restaurant's POS. Reading your shared Klown Pay backend.</p></div>
-        <button className="gold-button" onClick={() => show("Sync all menus queued")}>Sync all</button>
+        <div><h2>Menu directory</h2><p>Live menus from each restaurant's POS. To build a themed diner-facing menu, open Menu Studio.</p></div>
+        <Link className="gold-button" to="/admin/menus/studio" search={{ restaurant: undefined }}>Open Menu Studio</Link>
       </section>
 
       <div className="member-kpis">
@@ -99,7 +99,10 @@ function Page() {
             <span>{m.items}</span>
             <span className={m.sync_health === "healthy" ? "healthy" : m.sync_health === "offline" ? "offline" : "issue"}>● {titleCase(m.sync_health) || "—"}<small>{relTime(m.last_synced_at)}</small></span>
             <span><span className={m.status === "published" ? "status-pill live" : "status-pill"}>{titleCase(m.status) || "Draft"}</span></span>
-            <span><button className="outline-button" onClick={() => setSel(m)}>Manage</button></span>
+            <span style={{ display: "flex", gap: 8 }}>
+              <Link className="outline-button" to="/admin/menus/studio" search={{ restaurant: m.restaurant_id }}>Studio</Link>
+              <button className="outline-button" onClick={() => setSel(m)}>Manage</button>
+            </span>
           </div>
         ))}
       </div>
@@ -112,6 +115,7 @@ function Page() {
             <h3>{sel.name}</h3>
             <p>{sel.restaurant_name} · {sel.categories} categories · {sel.items} items · synced {relTime(sel.last_synced_at)}.</p>
             <div className="action-list">
+              <Link to="/admin/menus/studio" search={{ restaurant: sel.restaurant_id }}>Build in Menu Studio <span>›</span></Link>
               <button onClick={() => mutate.mutate({ id: sel.id, status: "published" })} disabled={mutate.isPending}>Publish <span>›</span></button>
               <button onClick={() => mutate.mutate({ id: sel.id, status: "needs_review" })} disabled={mutate.isPending}>Mark needs review <span>›</span></button>
               <button onClick={() => mutate.mutate({ id: sel.id, status: "draft" })} disabled={mutate.isPending}>Move to draft <span>›</span></button>

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "@/components/AdminLayout";
@@ -226,7 +226,10 @@ function Page() {
               </>)}
 
               {tab === "Menu" && (<>
-                <h3>Menu</h3>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                  <h3 style={{ margin: 0 }}>Menu</h3>
+                  <Link className="gold-button" to="/admin/menus/studio" search={{ restaurant: selected.id }}>Open in Menu Studio</Link>
+                </div>
                 {(detail?.menu ?? []).length === 0 && <div className="detail-note"><span>No menu published yet.</span></div>}
                 <div className="connection-list">
                   {(detail?.menu ?? []).map((x: any) => (
@@ -301,7 +304,7 @@ function Page() {
             <h3>Manage {confirm.name}</h3>
             <div className="action-list">
               <button onClick={() => { openR(confirm); setConfirm(null); }}>View restaurant <span>›</span></button>
-              <button onClick={() => show("Opened menu editor")}>Edit menu <span>›</span></button>
+              <Link to="/admin/menus/studio" search={{ restaurant: confirm.id }}>Build menu in Studio <span>›</span></Link>
               <button onClick={() => show("Opened POS connection")}>Connect POS <span>›</span></button>
               <button onClick={() => { show("Pause is disabled on live data in this test"); setConfirm(null); }}>Pause account <span>›</span></button>
             </div>

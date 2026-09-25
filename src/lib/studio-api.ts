@@ -1,10 +1,14 @@
 import { supabase } from "@/lib/supabase";
 
 /**
- * Menu Studio API — typed wrappers over the owner-scoped SECURITY DEFINER
- * studio_* RPCs on the shared backend. Every mutation returns the fresh full
- * menu tree so the client re-syncs. The caller's restaurant is resolved
- * server-side; the client never sends a restaurant id. Money in integer pesewas.
+ * Menu Studio API — typed wrappers over the SECURITY DEFINER studio_* RPCs on
+ * the shared backend. Every mutation returns the fresh full menu tree so the
+ * client re-syncs. Money in integer pesewas.
+ *
+ * Restaurant scope: for restaurant owners the caller's restaurant is resolved
+ * server-side and the optional restaurantId is omitted. For Klown super-admins
+ * (Admin Central > Menu Studio) the chosen restaurantId is passed so the RPC
+ * acts on that restaurant; the DB authorises this by super_admin role.
  */
 
 async function rpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
@@ -131,10 +135,13 @@ export type CatalogueItem = {
 export type RevisionRow = { id: string; label: string | null; created_at: string; created_by: string | null };
 
 // ---- menus --------------------------------------------------------------
-export const studioMenusList = () => rpc<MenuListRow[]>("studio_menus_list");
+// restaurantId is optional: owners omit it (resolved from their session);
+// super-admins pass the restaurant they are editing.
+export const studioMenusList = (restaurantId?: string) =>
+  rpc<MenuListRow[]>("studio_menus_list", restaurantId ? { p_restaurant_id: restaurantId } : undefined);
 export const studioMenuGet = (menuId: string) => rpc<StudioTree>("studio_menu_get", { p_menu_id: menuId });
-export const studioMenuCreate = (name: string, source: "manual" | "pos" = "manual") =>
-  rpc<StudioTree>("studio_menu_create", { p_name: name, p_source: source });
+export const studioMenuCreate = (name: string, source: "manual" | "pos" = "manual", restaurantId?: string) =>
+  rpc<StudioTree>("studio_menu_create", { p_name: name, p_source: source, ...(restaurantId ? { p_restaurant_id: restaurantId } : {}) });
 export const studioMenuUpdate = (menuId: string, patch: Record<string, unknown>) =>
   rpc<StudioTree>("studio_menu_update", { p_menu_id: menuId, p_patch: patch });
 export const studioMenuDelete = (menuId: string) => rpc<{ ok: boolean; id: string }>("studio_menu_delete", { p_menu_id: menuId });
@@ -158,8 +165,10 @@ export const studioItemMove = (itemId: string, toSectionId: string, toIndex: num
   rpc<StudioTree>("studio_item_move", { p_item_id: itemId, p_to_section_id: toSectionId, p_to_index: toIndex });
 
 // ---- catalogue ----------------------------------------------------------
-export const studioCatalogueList = () => rpc<CatalogueItem[]>("studio_catalogue_list");
-export const studioCatalogueUpsert = (item: Record<string, unknown>) => rpc<CatalogueItem[]>("studio_catalogue_upsert", { p_item: item });
+export const studioCatalogueList = (restaurantId?: string) =>
+  rpc<CatalogueItem[]>("studio_catalogue_list", restaurantId ? { p_restaurant_id: restaurantId } : undefined);
+export const studioCatalogueUpsert = (item: Record<string, unknown>, restaurantId?: string) =>
+  rpc<CatalogueItem[]>("studio_catalogue_upsert", { p_item: item, ...(restaurantId ? { p_restaurant_id: restaurantId } : {}) });
 export const studioCatalogueDelete = (id: string) => rpc<CatalogueItem[]>("studio_catalogue_delete", { p_id: id });
 export const studioPlaceCatalogueItem = (sectionId: string, catalogueItemId: string) =>
   rpc<StudioTree>("studio_place_catalogue_item", { p_section_id: sectionId, p_catalogue_item_id: catalogueItemId });
@@ -180,7 +189,7 @@ export const studioRevisionRestore = (menuId: string, revisionId: string) =>
   rpc<StudioTree>("studio_revision_restore", { p_menu_id: menuId, p_revision_id: revisionId });
 
 // ---- helpers ------------------------------------------------------------
-/** Price display: prefer the explicit display override, else the numeric pesewas as ₵, else blank. */
+/** Price display: prefer the explicit display override, else the numeric pesewas as cedi, else blank. */
 export function priceText(price_pesewas: number | null | undefined, price_display: string | null | undefined, currency = "GHS"): string {
   if (price_display && price_display.trim()) return price_display.trim();
   if (price_pesewas == null) return "";
@@ -270,7 +279,7 @@ export function studioFontLinkHref(): string {
 }
 
 // ---- assets -------------------------------------------------------------
-/** Upload an item image to the shared branding bucket under <restaurant_id>/items/ (allowed by the owner storage policy). */
+/** Upload an item image to the shared branding bucket under <restaurant_id>/items/ (staff + owner storage policies allow it). */
 export async function uploadStudioImage(restaurantId: string, file: File): Promise<string> {
   const nameExt = file.name.split(".").pop();
   const ext = nameExt && nameExt.length <= 5 ? nameExt.toLowerCase() : file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
