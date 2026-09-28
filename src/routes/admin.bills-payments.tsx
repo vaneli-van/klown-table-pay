@@ -46,7 +46,7 @@ function Page() {
   });
   const captured = all.filter((p) => p.status === "captured").reduce((s, p) => s + (p.total_pesewas || 0), 0);
   const refunds = all.filter((p) => p.refund_status).length;
-  const fee = sel ? Math.round((sel.total_pesewas || 0) * 0.05) : 0;
+  const fee = sel ? Math.round((sel.total_pesewas || 0) * 0.005) : 0;
 
   return (
     <AdminLayout title={TITLE}>
@@ -56,7 +56,7 @@ function Page() {
       </section>
       <div className="member-kpis">
         <div><span>Captured volume</span><b>{isLoading ? "…" : ghsCompact(captured)}</b><small className="green">live</small></div>
-        <div><span>Klown revenue</span><b>{isLoading ? "…" : ghsCompact(Math.round(captured * 0.05))}</b><small>5% of volume</small></div>
+        <div><span>Klown revenue</span><b>{isLoading ? "…" : ghsCompact(Math.round(captured * 0.005))}</b><small>0.5% of volume</small></div>
         <div><span>Refunds</span><b>{isLoading ? "…" : refunds}</b></div>
         <div><span>Payments</span><b>{isLoading ? "…" : all.length}</b></div>
       </div>
