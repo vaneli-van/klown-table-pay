@@ -166,6 +166,9 @@ async function rpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
 export const ownerContext = () => rpc<OwnerContext>("owner_context");
 export const ownerPaymentsSummary = (days = 14) => rpc<PaymentsSummary>("owner_payments_summary", { p_days: days });
 export const ownerRecentPayments = (limit = 12) => rpc<RecentPayment[]>("owner_recent_payments", { p_limit: limit });
+export const ownerSplitBills = (days = 30) => rpc<any[]>("owner_split_bills", { p_days: days }).then((d) => d ?? []);
+export const adminSplitBills = (restaurantId: string | null, days = 30) =>
+  rpc<any[]>("admin_split_bills", { p_days: days, p_restaurant_id: restaurantId }).then((d) => d ?? []);
 
 export type OrderItem = { name: string; qty: number; pesewas: number };
 export type OwnerOrder = {
