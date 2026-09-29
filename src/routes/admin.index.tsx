@@ -57,7 +57,7 @@ function Page() {
 
   const METRICS = [
     { label: "Captured volume", value: d ? ghsCompact(d.captured) : "…", note: "live", cls: "green" },
-    { label: "Klown revenue", value: d ? ghsCompact(Math.round(d.captured * 0.05)) : "…", note: "5% of volume", cls: "gold" },
+    { label: "Klown revenue", value: d ? ghsCompact(Math.round(d.captured * 0.005)) : "…", note: "0.5% of volume", cls: "gold" },
     { label: "Active members", value: d ? String(d.members) : "…", note: "live", cls: "green" },
     { label: "Live restaurants", value: d ? String(d.liveRestaurants) : "…", note: `${d?.restaurants.length ?? 0} total`, cls: "gold" },
     { label: "Payments", value: d ? String(d.payments.length) : "…", note: "captured + attempts", cls: "green" },

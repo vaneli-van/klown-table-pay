@@ -40,7 +40,7 @@ function mapRow(d: Dir): R {
     id: d.id, name: d.name, city: d.city ?? "—", locations: Number(d.branches) || 1,
     pos: titleCase(d.pos_provider) || "Manual menu", connection: titleCase(d.pos_health) || "Offline",
     tables: Number(d.tables) || 0, members: (Number(d.members) || 0).toLocaleString("en-GH"),
-    volume: ghsCompact(d.volume_pesewas), revenue: ghsCompact(Math.round((d.volume_pesewas || 0) * 0.05)),
+    volume: ghsCompact(d.volume_pesewas), revenue: ghsCompact(Math.round((d.volume_pesewas || 0) * 0.005)),
     onboarding: ONBOARDING[d.pos_status ?? "configuration"] ?? "Configuration", owner: "—",
     sync: relTime(d.last_sync_at), status: d.pos_status === "paused" ? "Paused" : "Active",
   };

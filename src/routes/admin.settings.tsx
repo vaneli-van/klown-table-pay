@@ -20,7 +20,7 @@ export const Route = createFileRoute("/admin/settings")({
 
 const CARDS = [
   { t: "Klown profile", d: "Workspace name, logo, contact and support email." },
-  { t: "Fees & revenue", d: "Klown fee is 5% of captured volume. Payout schedule and thresholds." },
+  { t: "Fees & revenue", d: "Klown fee is 0.5% of captured volume. Payout schedule and thresholds." },
   { t: "Payment providers", d: "Paystack keys, Mobile Money channels and card settings." },
   { t: "Notifications", d: "Where operational alerts are sent — email, in-app, webhook." },
   { t: "API keys & webhooks", d: "Programmatic access and event subscriptions." },
