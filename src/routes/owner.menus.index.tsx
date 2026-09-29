@@ -34,7 +34,7 @@ function MenusBody() {
     queryKey: ["studio_menus"],
     refetchOnWindowFocus: false,
     staleTime: 30_000,
-    queryFn: studioMenusList,
+    queryFn: () => studioMenusList(),
   });
 
   const create = async () => {

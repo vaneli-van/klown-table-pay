@@ -6,6 +6,8 @@ import { Toast, useToast, useEscape } from "@/components/prototype";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { ghs, ghsCompact, titleCase } from "@/lib/format";
+import { adminSplitBills } from "@/lib/owner-api";
+import SplitBillsTable, { isOutstanding, type SplitBill } from "@/components/SplitBills";
 
 const TITLE = "Bills & Payments";
 export const Route = createFileRoute("/admin/bills-payments")({
@@ -24,6 +26,7 @@ function Page() {
   const { toast, show } = useToast();
   const { staff } = useAuth();
   const [q, setQ] = useState("");
+  const [tab, setTab] = useState("Payments");
   const [statusF, setStatusF] = useState("All statuses");
   const [sel, setSel] = useState<Pay | null>(null);
   useEscape(() => setSel(null));
@@ -50,6 +53,12 @@ function Page() {
 
   return (
     <AdminLayout title={TITLE}>
+      <div className="detail-tabs">
+        {["Payments", "Split bills"].map((t) => (
+          <button key={t} className={tab === t ? "active" : ""} onClick={() => setTab(t)}>{t}</button>
+        ))}
+      </div>
+      {tab === "Split bills" ? <AdminSplits /> : <>
       <section className="ops-intro">
         <div><h2>Payments &amp; reconciliation</h2><p>Live payment feed from your shared Klown Pay backend.</p></div>
         <button className="gold-button" onClick={() => show("Exported payments.csv")}>Export</button>
@@ -105,7 +114,48 @@ function Page() {
           </div>
         </div>
       )}
+      </>}
       <Toast text={toast} />
     </AdminLayout>
+  );
+}
+
+function AdminSplits() {
+  const { staff } = useAuth();
+  const [rid, setRid] = useState<string>("");
+  const { data: restaurants = [] } = useQuery({
+    queryKey: ["admin_split_restaurants"],
+    enabled: !!staff,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("restaurants").select("id,name").order("name");
+      if (error) throw error;
+      return (data ?? []) as { id: string; name: string }[];
+    },
+  });
+  const { data = [], isLoading, error } = useQuery<SplitBill[]>({
+    queryKey: ["admin_split_bills", rid, staff?.id],
+    enabled: !!staff,
+    queryFn: () => adminSplitBills(rid || null, 30) as Promise<SplitBill[]>,
+  });
+  const outstanding = data.filter(isOutstanding).length;
+  return (
+    <>
+      <section className="ops-intro">
+        <div><h2>Split bills</h2><p>Split bills across the network, last 30 days.</p></div>
+      </section>
+      <div className="member-kpis">
+        <div><span>Split bills</span><b>{isLoading ? "…" : data.length}</b></div>
+        <div><span>Outstanding</span><b>{isLoading ? "…" : outstanding}</b></div>
+        <div><span>Paid so far</span><b>{isLoading ? "…" : ghsCompact(data.reduce((s, x) => s + (x.paid_pesewas || 0), 0))}</b></div>
+        <div><span>Split total</span><b>{isLoading ? "…" : ghsCompact(data.reduce((s, x) => s + (x.split_total_pesewas || 0), 0))}</b></div>
+      </div>
+      <div className="member-toolbar">
+        <select value={rid} onChange={(e) => setRid(e.target.value)}>
+          <option value="">All restaurants</option>
+          {restaurants.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+        </select>
+      </div>
+      <SplitBillsTable splits={data} loading={isLoading} error={error} showRestaurant />
+    </>
   );
 }

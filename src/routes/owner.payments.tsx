@@ -14,7 +14,9 @@ import {
   titleCase,
   type PaymentsSummary,
   type RecentPayment,
+  ownerSplitBills,
 } from "@/lib/owner-api";
+import SplitBillsTable, { isOutstanding, type SplitBill } from "@/components/SplitBills";
 
 const TITLE = "Payments";
 
@@ -27,12 +29,44 @@ export const Route = createFileRoute("/owner/payments")({
   }),
   component: () => (
     <OwnerLayout title={TITLE}>
-      <PaymentsBody />
+      <PaymentsTabs />
     </OwnerLayout>
   ),
 });
 
 const METHOD_COLORS = ["var(--gold)", "#373633", "#b8b1a6", "#628262"];
+
+function PaymentsTabs() {
+  const [tab, setTab] = useState("Payments");
+  return (
+    <>
+      <div className="detail-tabs">
+        {["Payments", "Split bills"].map((t) => (
+          <button key={t} className={tab === t ? "active" : ""} onClick={() => setTab(t)}>{t}</button>
+        ))}
+      </div>
+      {tab === "Payments" ? <PaymentsBody /> : <OwnerSplits />}
+    </>
+  );
+}
+
+function OwnerSplits() {
+  const { restaurantId } = useOwner();
+  const { data = [], isLoading, error } = useQuery<SplitBill[]>({
+    queryKey: ["owner_split_bills", restaurantId],
+    enabled: !!restaurantId,
+    queryFn: () => ownerSplitBills(30) as Promise<SplitBill[]>,
+  });
+  const outstanding = data.filter(isOutstanding).length;
+  return (
+    <>
+      <section className="ops-intro">
+        <div><h2>Split bills</h2><p>Bills diners split in the last 30 days. {outstanding ? `${outstanding} still outstanding.` : ""}</p></div>
+      </section>
+      <SplitBillsTable splits={data} loading={isLoading} error={error} />
+    </>
+  );
+}
 
 function PaymentsBody() {
   const { restaurantId, name } = useOwner();
