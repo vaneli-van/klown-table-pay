@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/AdminLayout";
 import { Toast, useToast, useEscape } from "@/components/prototype";
 import { useAuth } from "@/lib/auth";
@@ -20,6 +20,10 @@ function Page() {
   const { toast, show } = useToast();
   const { staff } = useAuth();
   const [adjust, setAdjust] = useState(false);
+  const [fPhone, setFPhone] = useState("");
+  const [fPoints, setFPoints] = useState("");
+  const [fReason, setFReason] = useState("");
+  const qc = useQueryClient();
   useEscape(() => setAdjust(false));
 
   const { data, isLoading, error } = useQuery({
@@ -30,6 +34,23 @@ function Page() {
       if (error) throw error;
       return (data ?? []) as P[];
     },
+  });
+
+  const record = useMutation({
+    mutationFn: async () => {
+      // Normalise to the local 10-digit form the diner stores (0XXXXXXXXX) so the sum lands on the right member.
+      const digits = fPhone.replace(/\D/g, "");
+      const phone = digits.startsWith("233") ? "0" + digits.slice(3) : digits.length === 9 ? "0" + digits : digits;
+      const pts = Math.trunc(Number(fPoints));
+      const reason = fReason.trim();
+      if (!phone) throw new Error("Enter the member phone.");
+      if (!Number.isFinite(pts) || pts === 0) throw new Error("Points must be a non-zero number (use a minus sign to deduct).");
+      if (!reason) throw new Error("A reason is required.");
+      const { error } = await supabase.from("rewards_activity").insert({ phone, points: pts, reason: "Manual adjustment: " + reason });
+      if (error) throw error;
+    },
+    onSuccess: () => { show("Adjustment recorded"); setAdjust(false); setFPhone(""); setFPoints(""); setFReason(""); qc.invalidateQueries({ queryKey: ["rewards_activity"] }); },
+    onError: (e: any) => show(e.message),
   });
 
   const all = data ?? [];
@@ -64,10 +85,10 @@ function Page() {
           <div className="confirm-box">
             <button onClick={() => setAdjust(false)}>✕</button>
             <span className="panel-kicker">Manual adjustment</span><h3>Adjust points</h3>
-            <label className="wizard-fields" style={{ display: "block" }}><div className="helper-line"><span>Member phone</span></div><input className="wide-input" placeholder="+233 …" /></label>
-            <label className="wizard-fields" style={{ display: "block" }}><div className="helper-line"><span>Points (+/-)</span></div><input className="wide-input" type="number" /></label>
-            <label className="wizard-fields" style={{ display: "block" }}><div className="helper-line"><span>Reason</span><span className="sim-badge">required</span></div><input className="wide-input" /></label>
-            <button className="gold-button" onClick={() => { show("Manual adjustment is disabled in this live test"); setAdjust(false); }}>Record adjustment</button>
+            <label className="wizard-fields" style={{ display: "block" }}><div className="helper-line"><span>Member phone</span></div><input className="wide-input" placeholder="+233 …" value={fPhone} onChange={(e) => setFPhone(e.target.value)} /></label>
+            <label className="wizard-fields" style={{ display: "block" }}><div className="helper-line"><span>Points (+/-)</span></div><input className="wide-input" type="number" value={fPoints} onChange={(e) => setFPoints(e.target.value)} /></label>
+            <label className="wizard-fields" style={{ display: "block" }}><div className="helper-line"><span>Reason</span><span className="sim-badge">required</span></div><input className="wide-input" value={fReason} onChange={(e) => setFReason(e.target.value)} /></label>
+            <button className="gold-button" onClick={() => record.mutate()} disabled={record.isPending}>{record.isPending ? "Recording…" : "Record adjustment"}</button>
           </div>
         </div>
       )}

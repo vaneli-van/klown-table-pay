@@ -13,7 +13,7 @@ export const Route = createFileRoute("/admin/support")({
   component: Page,
 });
 
-type T = { key: string; id: string; subject: string; category: string; source: string; rest: string; status: string; body?: string; email?: string; time: string; lead?: boolean };
+type T = { key: string; id: string; subject: string; category: string; source: string; src?: "dispute" | "waiter"; rest: string; status: string; body?: string; email?: string; time: string; lead?: boolean };
 const COLS = "1.7fr 1fr 1fr 1fr 22px";
 const fmt = (iso: string) => new Date(iso).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
@@ -40,7 +40,7 @@ function Page() {
         rest: "—", status: l.status === "new" ? "Open" : titleCase(l.status), body: l.message, email: l.email, time: fmt(l.created_at), lead: true,
       }));
       const queueT: T[] = (queue.data ?? []).map((r: any) => ({
-        key: "q-" + r.id, id: r.id, subject: r.subject, category: r.category, source: r.source === "dispute" ? "Bill dispute" : "Waiter request",
+        key: "q-" + r.id, id: r.id, src: r.source, subject: r.source === "waiter" ? "Waiter request: " + titleCase(String(r.subject).replace(/^Waiter request:\s*/, "").replace(/_/g, " ")) : r.subject, category: r.category, source: r.source === "dispute" ? "Bill dispute" : "Waiter request",
         rest: r.restaurant_name ?? "—", status: titleCase(r.status), time: fmt(r.created_at),
       }));
       return [...leadT, ...queueT];
@@ -50,7 +50,9 @@ function Page() {
   const resolve = useMutation({
     mutationFn: async (t: T) => {
       if (t.lead) { const { error } = await supabase.from("marketing_leads").update({ status: "handled" }).eq("id", t.id); if (error) throw error; }
-      else throw new Error("Resolving diner tickets isn't wired in this test yet.");
+      else if (t.src === "dispute") { const { error } = await supabase.from("bill_disputes").update({ status: "resolved" }).eq("id", t.id); if (error) throw error; }
+      else if (t.src === "waiter") { const { error } = await supabase.from("waiter_requests").update({ status: "resolved" }).eq("id", t.id); if (error) throw error; }
+      else throw new Error("Unknown ticket source.");
     },
     onSuccess: () => { show("Resolved"); setSel(null); qc.invalidateQueries({ queryKey: ["support"] }); },
     onError: (e: any) => show(e.message),
