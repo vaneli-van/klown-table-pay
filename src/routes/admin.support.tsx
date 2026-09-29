@@ -51,7 +51,7 @@ function Page() {
     mutationFn: async (t: T) => {
       if (t.lead) { const { error } = await supabase.from("marketing_leads").update({ status: "handled" }).eq("id", t.id); if (error) throw error; }
       else if (t.src === "dispute") { const { error } = await supabase.from("bill_disputes").update({ status: "resolved" }).eq("id", t.id); if (error) throw error; }
-      else if (t.src === "waiter") { const { error } = await supabase.from("waiter_requests").update({ status: "resolved" }).eq("id", t.id); if (error) throw error; }
+      else if (t.src === "waiter") { const { error } = await supabase.from("waiter_requests").update({ status: "closed" }).eq("id", t.id); if (error) throw error; }
       else throw new Error("Unknown ticket source.");
     },
     onSuccess: () => { show("Resolved"); setSel(null); qc.invalidateQueries({ queryKey: ["support"] }); },
@@ -59,8 +59,8 @@ function Page() {
   });
 
   const all = data ?? [];
-  const open = all.filter((t) => !["resolved", "handled", "archived"].includes(t.status.toLowerCase()));
-  const resolvedish = (s: string) => ["resolved", "handled", "archived"].includes(s.toLowerCase());
+  const open = all.filter((t) => !["resolved", "handled", "archived", "closed"].includes(t.status.toLowerCase()));
+  const resolvedish = (s: string) => ["resolved", "handled", "archived", "closed"].includes(s.toLowerCase());
 
   return (
     <AdminLayout title={TITLE}>

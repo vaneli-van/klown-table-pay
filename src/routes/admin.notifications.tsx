@@ -27,7 +27,7 @@ function Page() {
       const [pos, fails, support] = await Promise.all([
         supabase.from("admin_pos_directory").select("id,provider,health,restaurant_name").neq("health", "healthy"),
         supabase.from("admin_payment_feed").select("id,failure_reason,restaurant_name,status").eq("status", "failed").limit(5),
-        supabase.from("admin_support_queue").select("id,source,subject,restaurant_name,status").neq("status", "resolved").limit(5),
+        supabase.from("admin_support_queue").select("id,source,subject,restaurant_name,status").not("status", "in", "(resolved,closed)").limit(5),
       ]);
       const out: N[] = [];
       (support.data ?? []).forEach((d: any) => out.push({
