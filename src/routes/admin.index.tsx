@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { downloadCsv } from "@/lib/csv";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "@/components/AdminLayout";
 import { Toast, useToast } from "@/components/prototype";
@@ -68,7 +69,7 @@ function Page() {
     <AdminLayout title={TITLE}>
       <section className="ops-intro">
         <div><h2>Today at Klown</h2><p>Live network performance from your shared Klown Pay backend.</p></div>
-        <button className="gold-button" onClick={() => show("Exported overview.csv")}>Export</button>
+        <button className="gold-button" onClick={() => show(downloadCsv("overview.csv", METRICS.map((m) => ({ metric: m.label, value: m.value, note: m.note }))) ? "Exported overview.csv" : "Nothing to export yet")}>Export</button>
       </section>
 
       <div className="metrics-grid">

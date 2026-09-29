@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { downloadCsv } from "@/lib/csv";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/AdminLayout";
@@ -74,7 +75,7 @@ function Page() {
     <AdminLayout title={TITLE}>
       <section className="ops-intro">
         <div><h2>Subscriber list</h2><p>Live consent + sources. Website newsletter signups from the homepage appear here too.</p></div>
-        <button className="gold-button" onClick={() => show("Exported subscribers.csv")}>Export</button>
+        <button className="gold-button" onClick={() => show(downloadCsv("subscribers.csv", rows) ? "Exported subscribers.csv" : "Nothing to export yet")}>Export</button>
       </section>
       <div className="member-kpis">
         <div><span>Total subscribers</span><b>{isLoading ? "…" : all.length}</b><small className="green">live</small></div>

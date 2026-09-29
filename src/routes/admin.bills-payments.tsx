@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { downloadCsv } from "@/lib/csv";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "@/components/AdminLayout";
@@ -61,7 +62,7 @@ function Page() {
       {tab === "Split bills" ? <AdminSplits /> : <>
       <section className="ops-intro">
         <div><h2>Payments &amp; reconciliation</h2><p>Live payment feed from your shared Klown Pay backend.</p></div>
-        <button className="gold-button" onClick={() => show("Exported payments.csv")}>Export</button>
+        <button className="gold-button" onClick={() => show(downloadCsv("payments.csv", rows) ? "Exported payments.csv" : "Nothing to export yet")}>Export</button>
       </section>
       <div className="member-kpis">
         <div><span>Captured volume</span><b>{isLoading ? "…" : ghsCompact(captured)}</b><small className="green">live</small></div>

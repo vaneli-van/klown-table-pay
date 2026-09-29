@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { downloadCsv } from "@/lib/csv";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "@/components/AdminLayout";
@@ -117,7 +118,7 @@ function Page() {
             <label className="search-field"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search restaurants, owners or locations" /></label>
             <select value={status} onChange={(e) => setStatus(e.target.value)}><option>All statuses</option><option>Active</option><option>Paused</option></select>
             <select value={pos} onChange={(e) => setPos(e.target.value)}><option>All POS</option><option>Odoo</option><option>Sambapos</option><option>Omega</option><option>Manual</option></select>
-            <button className="outline-button" onClick={() => show("Exported restaurants.csv")}>Export CSV</button>
+            <button className="outline-button" onClick={() => show(downloadCsv("restaurants.csv", filtered) ? "Exported restaurants.csv" : "Nothing to export yet")}>Export CSV</button>
           </section>
           <div className="directory-summary"><b>{isLoading ? "…" : filtered.length} restaurants</b><span>Live data</span></div>
           <section className="restaurant-table">
