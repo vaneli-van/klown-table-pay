@@ -147,7 +147,7 @@ function Page() {
               </div>
             ))}
           </section>
-          <div className="pagination"><span>Showing 1–{filtered.length} of {all.length}</span><div><button>‹</button><button>›</button></div></div>
+          <div className="pagination"><span>Showing 1–{filtered.length} of {all.length}</span></div>
         </>
       ) : (
         <section className="pipeline">
@@ -306,8 +306,7 @@ function Page() {
             <div className="action-list">
               <button onClick={() => { openR(confirm); setConfirm(null); }}>View restaurant <span>›</span></button>
               <Link to="/admin/menu-studio" search={{ restaurant: confirm.id }}>Build menu in Studio <span>›</span></Link>
-              <button onClick={() => show("Opened POS connection")}>Connect POS <span>›</span></button>
-              <button onClick={() => { show("Pause is disabled on live data in this test"); setConfirm(null); }}>Pause account <span>›</span></button>
+              <Link to="/admin/pos-integrations">Connect POS <span>›</span></Link>
             </div>
             <button className="quiet" onClick={() => setConfirm(null)}>Cancel</button>
           </div>
@@ -336,7 +335,6 @@ function Page() {
                   <div className="wizard-placeholder"><div className="placeholder-icon">+</div><p>Configure {WIZARD_STEPS[step - 1].toLowerCase()}.</p><small>Business details save when you activate.</small></div>
                 )}
                 <div className="wizard-actions">
-                  <button className="quiet" onClick={() => show("Draft saved")}>Save draft</button>
                   <div style={{ display: "flex", gap: 10 }}>
                     <button className="quiet" onClick={() => step > 1 && setStep(step - 1)} disabled={step === 1}>Back</button>
                     {step < 8 ? <button className="gold-button" onClick={() => setStep(step + 1)}>Continue ›</button>

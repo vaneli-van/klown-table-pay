@@ -168,7 +168,6 @@ function Page() {
             </div>
             <div className="provider-card-footer">
               <button className="gold-button" onClick={() => { if (p.key === "odoo") { setOdoo(true); } else if (p.key === "sambapos") { setSamba(true); setNewToken(null); } else { setConnect(p); setTested(false); } }}>{p.key === "odoo" ? "Connect / manage" : "Connect"}</button>
-              <button className="outline-button" onClick={() => show(`${p.name} docs (prototype)`)}>Docs</button>
             </div>
           </div>
         ))}

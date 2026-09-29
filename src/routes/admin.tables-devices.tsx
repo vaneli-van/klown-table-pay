@@ -151,7 +151,6 @@ function Page() {
               <span>{relTime(r.last_heartbeat_at)}</span>
               <span style={{ display: "flex", gap: 8 }}>
                 <button className="gold-button" style={{ padding: "8px 12px" }} disabled={!qr?.qr_url} onClick={() => qr && setQrRow({ ...r, ...qr })}>QR code</button>
-                <button className="outline-button" style={{ padding: "8px 10px" }} onClick={() => show(r.device_label ? `Pinged ${r.device_label}` : `Pairing ${r.label}…`)}>{r.device_label ? "Ping" : "Pair"}</button>
               </span>
             </div>
           );})}

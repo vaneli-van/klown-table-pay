@@ -146,7 +146,7 @@ export default function AdminLayout({ title, children }: { title: string; childr
           <button className="mobile-menu" aria-label="Open menu" onClick={() => setOpen((v) => !v)}>☰</button>
           <div><span className="ops-breadcrumb">Workspace</span><h1>{title}</h1></div>
           <div className="ops-top-actions">
-            <button className="gold-button">{ROLE_LABEL[staff.role] ?? staff.role}</button>
+            <span className="gold-button" style={{ pointerEvents: "none" }}>{ROLE_LABEL[staff.role] ?? staff.role}</span>
             <button className="outline-button" onClick={() => signOut()}>Sign out</button>
           </div>
         </header>

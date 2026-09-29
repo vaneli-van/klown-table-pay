@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "@/components/AdminLayout";
-import { Toast, useToast } from "@/components/prototype";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 
@@ -17,7 +16,6 @@ const TIERS = [
 ];
 
 function Page() {
-  const { toast, show } = useToast();
   const { staff } = useAuth();
   const { data } = useQuery({
     queryKey: ["tier_counts", staff?.id], enabled: !!staff,
@@ -33,7 +31,7 @@ function Page() {
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   return (
     <AdminLayout title={TITLE}>
-      <section className="ops-intro"><div><h2>Membership tiers</h2><p>The Klown Club ladder — live member counts per tier.</p></div><button className="gold-button" onClick={() => show("Tier rules saved")}>Save rules</button></section>
+      <section className="ops-intro"><div><h2>Membership tiers</h2><p>The Klown Club ladder — live member counts per tier.</p></div></section>
       <div className="member-kpis">
         <div><span>Total members</span><b>{total}</b></div>
         <div><span>Member</span><b>{counts["member"] || 0}</b></div>
@@ -47,11 +45,9 @@ function Page() {
             <h3>{t.name}</h3><p>{t.perks}</p>
             <div className="tier-rule"><span>Earn rate</span><b>{t.earn}</b></div>
             <div className="tier-rule"><span>Threshold</span><b>{t.threshold}</b></div>
-            <button className="outline-button" onClick={() => show(`Edit ${t.name} tier`)}>Edit tier</button>
           </div>
         ))}
       </div>
-      <Toast text={toast} />
     </AdminLayout>
   );
 }
