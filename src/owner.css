@@ -86,3 +86,11 @@
 .detail-row:last-child { border-bottom: 0; }
 .detail-row > span { color: var(--muted); }
 .detail-row > b { font-weight: 700; text-align: right; display: inline-flex; align-items: center; gap: 4px; }
+
+
+/* Reviews page */
+.own-stars { letter-spacing: 1px; font-size: 14px; white-space: nowrap; }
+.own-stars .on { color: var(--gold, #c8a56b); }
+.own-stars .off { color: #d9d3c7; }
+.connection-list .own-review-comment { color: var(--ink, #171717); font-size: 12px; line-height: 1.45; margin-top: 6px; }
+.connection-list > div.is-low { box-shadow: inset 2px 0 0 #a26d50; padding-left: 12px; }

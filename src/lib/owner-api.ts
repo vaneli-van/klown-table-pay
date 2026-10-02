@@ -265,3 +265,26 @@ export async function uploadBrandingImage(restaurantId: string, kind: "logo" | "
   const { data } = supabase.storage.from("branding").getPublicUrl(path);
   return data.publicUrl;
 }
+
+
+// ---- reviews / guest feedback -------------------------------------------
+
+export type OwnerReview = {
+  id: string;
+  rating: number;
+  comment: string | null;
+  sentiment: string | null;
+  created_at: string;
+  table_label: string | null;
+};
+export type ReviewsSummary = {
+  days: number;
+  total: number;
+  avg_rating: number;
+  low_count: number;
+  high_count: number;
+};
+export const ownerReviews = (limit = 100) =>
+  rpc<OwnerReview[]>("owner_reviews", { p_limit: limit }).then((d) => d ?? []);
+export const ownerReviewsSummary = (days = 30) =>
+  rpc<ReviewsSummary>("owner_reviews_summary", { p_days: days });
