@@ -33,12 +33,41 @@ type Form = {
 };
 const EMPTY: Form = { logo_url: null, hero_url: null, accent_color: null, tagline_top: null, tagline_bottom: null, welcome_copy: null };
 
+// Does this logo sit on a transparent background? The diner header is dark, so an opaque
+// white/black box around a logo looks broken. SVGs are trusted; JPEGs can't carry alpha;
+// PNG/WEBP/AVIF are sampled on a canvas. Errors resolve to "unknown" and never block.
+async function logoBackground(file: File): Promise<"transparent" | "opaque" | "unknown"> {
+  if (file.type === "image/svg+xml") return "transparent";
+  if (file.type === "image/jpeg") return "opaque";
+  try {
+    const bmp = await createImageBitmap(file);
+    const w = Math.min(bmp.width, 256), h = Math.min(bmp.height, 256);
+    const cv = document.createElement("canvas");
+    cv.width = w; cv.height = h;
+    const ctx = cv.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return "unknown";
+    ctx.drawImage(bmp, 0, 0, w, h);
+    const px = ctx.getImageData(0, 0, w, h).data;
+    let clear = 0, edgeClear = 0, edge = 0;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const a = px[(y * w + x) * 4 + 3];
+      const isEdge = x === 0 || y === 0 || x === w - 1 || y === h - 1;
+      if (a < 250) clear++;
+      if (isEdge) { edge++; if (a < 250) edgeClear++; }
+    }
+    // A real transparent logo has see-through pixels around its edge; a flattened one has none.
+    if (edge > 0 && edgeClear / edge < 0.05 && clear / (w * h) < 0.02) return "opaque";
+    return "transparent";
+  } catch { return "unknown"; }
+}
+
 function ThemeBody() {
   const { restaurantId, name, show } = useOwner();
   const qc = useQueryClient();
   const [form, setForm] = useState<Form>(EMPTY);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<"logo" | "hero" | null>(null);
+  const [heldLogo, setHeldLogo] = useState<File | null>(null);
   const logoInput = useRef<HTMLInputElement>(null);
   const heroInput = useRef<HTMLInputElement>(null);
   const loadedFor = useRef<string | null>(null);
@@ -63,10 +92,18 @@ function ThemeBody() {
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => ({ ...f, [k]: v }));
 
-  const upload = async (kind: "logo" | "hero", file: File | undefined) => {
+  const upload = async (kind: "logo" | "hero", file: File | undefined, force = false) => {
     if (!file) return;
     if (!OK_TYPES.includes(file.type)) { show("Use a PNG, JPG, WEBP, AVIF or SVG image"); return; }
     if (file.size > MAX_BYTES) { show("Image is larger than 5 MB"); return; }
+    setHeldLogo(null);
+    if (kind === "logo" && !force) {
+      if ((await logoBackground(file)) === "opaque") {
+        setHeldLogo(file);
+        show("This logo has a solid background. A transparent PNG or SVG looks right on the dark header.");
+        return;
+      }
+    }
     setUploading(kind);
     try {
       const url = await uploadBrandingImage(restaurantId, kind, file);
@@ -136,6 +173,17 @@ function ThemeBody() {
                   {form.logo_url && <button className="quiet" onClick={() => set("logo_url", null)}>Remove</button>}
                 </div>
               </div>
+              {heldLogo && (
+                <div className="detail-note" style={{ marginTop: 10 }}>
+                  <span>
+                    <b>{heldLogo.name}</b> has a solid background, so it would show as a box on the diner app&apos;s dark header. Export it as a PNG or SVG with a transparent background and upload that instead.
+                  </span>
+                  <div className="own-actions" style={{ marginTop: 8, justifyContent: "flex-start" }}>
+                    <button className="outline-button" onClick={() => logoInput.current?.click()}>Choose another file</button>
+                    <button className="quiet" onClick={() => upload("logo", heldLogo, true)}>Use it anyway</button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="own-field">
