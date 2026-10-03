@@ -1,77 +1,62 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import OwnerLayout, { useOwner } from "@/components/OwnerLayout";
-import { ownerPayouts, ownerSetSchedule, cedis, cedisShort, shortDate, titleCase, type Payouts } from "@/lib/owner-api";
+import { ownerSettlement, cedis, cedisShort, shortDate, titleCase, type Settlement } from "@/lib/owner-api";
 
-const TITLE = "Payouts";
-const SCHEDULES = ["daily", "weekly", "manual"];
+const TITLE = "Settlement";
 
 export const Route = createFileRoute("/owner/payouts")({
   head: () => ({
     meta: [
       { title: `Klown — ${TITLE}` },
-      { name: "description", content: "Your available balance, payout schedule and payout history on Klown." },
+      { name: "description", content: "Where your Klown payments settle, and the payments that have been paid to your account." },
     ],
   }),
   component: () => (
     <OwnerLayout title={TITLE}>
-      <PayoutsBody />
+      <SettlementBody />
     </OwnerLayout>
   ),
 });
 
-function statusClass(s: string) {
-  const k = (s || "").toLowerCase();
-  if (k === "paid") return "status-badge status-success";
-  if (k === "failed" || k === "cancelled") return "status-badge status-danger";
-  return "status-badge status-warning";
+function methodLabel(m: string | null) {
+  const k = (m || "").toLowerCase();
+  if (k === "momo" || k === "mobile_money") return "Mobile Money";
+  if (k === "card") return "Card";
+  return m ? titleCase(m) : "—";
 }
 
-function PayoutsBody() {
-  const { restaurantId, show } = useOwner();
-  const qc = useQueryClient();
-  const [savingSchedule, setSavingSchedule] = useState(false);
-
-  const { data, isLoading } = useQuery<Payouts>({
-    queryKey: ["owner_payouts", restaurantId],
+function SettlementBody() {
+  const { restaurantId } = useOwner();
+  const { data, isLoading } = useQuery<Settlement>({
+    queryKey: ["owner_settlement", restaurantId],
     enabled: !!restaurantId,
-    queryFn: ownerPayouts,
+    queryFn: ownerSettlement,
   });
 
-  const settings = data?.settings ?? null;
-  const accounts = data?.accounts ?? [];
-  const payouts = data?.payouts ?? [];
-  const defaultAccount = accounts.find((a) => a.is_default) ?? accounts[0] ?? null;
-
-  const setSchedule = async (schedule: string) => {
-    setSavingSchedule(true);
-    try {
-      await ownerSetSchedule(schedule);
-      show(`Payout schedule set to ${schedule}`);
-      qc.invalidateQueries({ queryKey: ["owner_payouts", restaurantId] });
-    } catch (e: any) {
-      show("Couldn't update schedule: " + (e?.message ?? "unknown error"));
-    } finally {
-      setSavingSchedule(false);
-    }
-  };
+  const connected = !!data?.connected;
+  const recent = data?.recent ?? [];
+  const feePct = data ? (data.fee_bps / 100).toFixed(2).replace(/\.?0+$/, "") : "0.5";
 
   const METRICS = [
-    { label: "Available balance", value: settings ? cedisShort(settings.available_pesewas) : "…", note: "ready to pay out", cls: "green" },
-    { label: "Pending", value: settings ? cedisShort(settings.pending_pesewas) : "…", note: "clearing", cls: "gold" },
-    { label: "Payout fee", value: settings ? cedis(settings.payout_fee_pesewas) : "…", note: "per payout", cls: "gold" },
-    { label: "Minimum payout", value: settings ? cedis(settings.min_payout_pesewas) : "…", note: "threshold", cls: "gold" },
+    { label: "Paid to you, 30 days", value: data ? cedisShort(data.settled_30d_pesewas) : "…", note: data ? `${data.payments_30d} payment${data.payments_30d === 1 ? "" : "s"}` : "", cls: "green" },
+    { label: "Paid to you, all time", value: data ? cedisShort(data.settled_all_pesewas) : "…", note: "through Klown", cls: "gold" },
+    { label: "Last payment", value: data?.last_payment_at ? shortDate(data.last_payment_at) : data ? "None yet" : "…", note: "most recent", cls: "gold" },
+    { label: "Klown fee", value: `${feePct}%`, note: "per payment, paid by the diner", cls: "gold" },
   ];
 
   return (
     <>
       <section className="ops-intro">
         <div>
-          <h2>Payouts</h2>
-          <p>Your balance, payout schedule and history. Payouts settle to your default payout account.</p>
+          <h2>Settlement</h2>
+          <p>
+            {connected
+              ? "Every card and Mobile Money payment settles straight to your bank account through Paystack. Klown never holds your money."
+              : "Your bank account is not connected yet, so Klown collects payments on your behalf and transfers them to you manually."}
+          </p>
         </div>
-        <Link to="/owner/bank" className="gold-button">Manage payout account</Link>
+        <Link to="/owner/bank" className="gold-button">Settlement account</Link>
       </section>
 
       <div className="metrics-grid own-metrics-4">
@@ -82,62 +67,49 @@ function PayoutsBody() {
 
       <div className="dashboard-grid">
         <div className="panel">
-          <div className="panel-heading"><div><span className="panel-kicker">Schedule</span><h2>When you get paid</h2></div></div>
-          <div className="own-schedule">
-            {SCHEDULES.map((s) => (
-              <button
-                key={s}
-                className={settings?.schedule === s ? "own-schedule-opt is-on" : "own-schedule-opt"}
-                onClick={() => setSchedule(s)}
-                disabled={savingSchedule || settings?.schedule === s}
-              >
-                <b>{titleCase(s)}</b>
-                <small>{s === "daily" ? "Every working day" : s === "weekly" ? "Once a week" : "You request each payout"}</small>
-              </button>
-            ))}
-          </div>
+          <div className="panel-heading"><div><span className="panel-kicker">Destination</span><h2>Where payments land</h2></div><Link to="/owner/bank" className="panel-link">Details ›</Link></div>
+          {connected ? (
+            <div className="location-card">
+              <b style={{ fontWeight: 400 }}>{data?.bank_name || "Bank account"}{data?.masked ? ` · ${data.masked}` : ""}</b>
+              <span>{data?.account_name || "—"}</span>
+              <small><span className="status-badge status-success">Connected</span></small>
+            </div>
+          ) : (
+            <div className="empty-state"><h3>Not connected</h3><p>Send us your bank details from the Settlement account page and we will connect direct settlement.</p></div>
+          )}
         </div>
 
         <div className="panel">
-          <div className="panel-heading"><div><span className="panel-kicker">Destination</span><h2>Default account</h2></div><Link to="/owner/bank" className="panel-link">Change ›</Link></div>
-          {defaultAccount ? (
-            <div className="location-card">
-              <b style={{ fontWeight: 400 }}>{defaultAccount.provider || titleCase(defaultAccount.destination_type)} · {defaultAccount.masked}</b>
-              <span>{defaultAccount.account_name || "—"}{defaultAccount.branch ? " · " + defaultAccount.branch : ""}</span>
-              <small>
-                <span className={defaultAccount.verification_status === "verified" ? "status-badge status-success" : "status-badge status-warning"}>{titleCase(defaultAccount.verification_status)}</span>
-              </small>
-            </div>
-          ) : (
-            <div className="empty-state"><h3>No payout account</h3><p>Add a Mobile Money or bank account so Klown can pay you.</p></div>
-          )}
+          <div className="panel-heading"><div><span className="panel-kicker">How it works</span><h2>What you receive</h2></div></div>
+          <div className="detail-list">
+            <div className="detail-row"><span>You receive</span><b>The full bill plus tip</b></div>
+            <div className="detail-row"><span>Processing fees</span><b>Added at the diner&apos;s payment prompt</b></div>
+            <div className="detail-row"><span>Klown fee</span><b>{feePct}%, also covered by the diner</b></div>
+            <div className="detail-row"><span>Settles</span><b>{connected ? "On Paystack's settlement schedule" : "By manual transfer from Klown"}</b></div>
+          </div>
         </div>
       </div>
 
       <div className="panel table-panel">
-        <div className="panel-heading"><div><span className="panel-kicker">History</span><h2>Payouts</h2></div></div>
+        <div className="panel-heading"><div><span className="panel-kicker">Recent</span><h2>Payments paid to you</h2></div><Link to="/owner/payments" className="panel-link">All payments ›</Link></div>
         <div className="admin-table">
-          <div className="table-row own-payout-row table-head"><span>Reference</span><span>Destination</span><span>Amount</span><span>Status</span><span>Date</span></div>
+          <div className="table-row own-payout-row table-head"><span>Date</span><span>Table</span><span>Method</span><span>Bill + tip</span><span>Paid to you</span></div>
           {isLoading ? (
             <div className="empty-state"><h3>Loading…</h3></div>
-          ) : payouts.length === 0 ? (
-            <div className="empty-state"><h3>No payouts yet</h3><p>Your payouts appear here once you start getting paid.</p></div>
+          ) : recent.length === 0 ? (
+            <div className="empty-state"><h3>No payments yet</h3><p>Payments appear here as soon as a diner pays through Klown.</p></div>
           ) : (
-            payouts.map((p) => (
-              <div className="table-row own-payout-row" key={p.reference}>
-                <span><b>{p.reference}</b></span>
-                <span>{p.destination || "—"}</span>
-                <span><b>{cedis(p.amount_pesewas)}</b></span>
-                <span><span className={statusClass(p.status)}>{titleCase(p.status)}</span></span>
-                <span>{p.paid_at ? shortDate(p.paid_at) : p.scheduled_for ? "Due " + shortDate(p.scheduled_for) : shortDate(p.created_at)}</span>
+            recent.map((p) => (
+              <div className="table-row own-payout-row" key={p.id}>
+                <span>{shortDate(p.created_at)}</span>
+                <span>{p.table_label ? `Table ${p.table_label}` : "—"}</span>
+                <span>{methodLabel(p.method)}</span>
+                <span>{cedis(p.amount_pesewas)}{p.tip_pesewas ? ` + ${cedis(p.tip_pesewas)}` : ""}</span>
+                <span><b>{cedis(p.total_pesewas)}</b></span>
               </div>
             ))
           )}
         </div>
-      </div>
-
-      <div className="detail-note">
-        <span>Balances and payouts shown here are placeholders while your live payout provider is being connected. Once it's live, these figures come straight from settlements.</span>
       </div>
     </>
   );

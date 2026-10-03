@@ -108,42 +108,28 @@ export type Integrations = {
   connectors: { provider: string; name: string | null; active: boolean; last_seen_at: string | null }[];
 } | null;
 
-export type PayoutSettings = {
-  restaurant_id: string;
-  schedule: string;
-  min_payout_pesewas: number | null;
-  available_pesewas: number | null;
-  pending_pesewas: number | null;
-  payout_fee_pesewas: number | null;
-  updated_at: string | null;
-} | null;
-
-export type PayoutAccount = {
+export type SettledPayment = {
   id: string;
-  destination_type: string;
-  provider: string | null;
-  account_number: string | null;
-  account_name: string | null;
-  branch: string | null;
-  masked: string | null;
-  is_default: boolean;
-  verification_status: string | null;
-};
-
-export type Payout = {
-  reference: string;
+  reference: string | null;
+  method: string | null;
+  table_label: string | null;
   amount_pesewas: number;
-  destination: string | null;
-  status: string;
-  scheduled_for: string | null;
-  paid_at: string | null;
+  tip_pesewas: number;
+  total_pesewas: number;
   created_at: string;
 };
 
-export type Payouts = {
-  settings: PayoutSettings;
-  accounts: PayoutAccount[];
-  payouts: Payout[];
+export type Settlement = {
+  connected: boolean;
+  bank_name: string | null;
+  account_name: string | null;
+  masked: string | null;
+  fee_bps: number;
+  settled_30d_pesewas: number;
+  payments_30d: number;
+  settled_all_pesewas: number;
+  last_payment_at: string | null;
+  recent: SettledPayment[];
 } | null;
 
 export type Ticket = {
@@ -189,7 +175,7 @@ export const ownerOrders = (from?: string | null, to?: string | null, limit = 50
   rpc<OwnerOrder[]>("owner_orders", { p_from: from ?? null, p_to: to ?? null, p_limit: limit });
 export const ownerIntegrations = () => rpc<Integrations>("owner_integrations");
 export const ownerBranding = () => rpc<OwnerBranding>("owner_branding");
-export const ownerPayouts = () => rpc<Payouts>("owner_payouts");
+export const ownerSettlement = () => rpc<Settlement>("owner_settlement");
 export const ownerTickets = () => rpc<Ticket[]>("owner_tickets");
 
 export const ownerSaveBranding = (b: {
@@ -208,23 +194,6 @@ export const ownerSaveBranding = (b: {
     p_tagline_bottom: b.tagline_bottom,
     p_welcome_copy: b.welcome_copy,
   });
-
-export const ownerSaveBank = (a: {
-  destination_type: string;
-  provider: string | null;
-  account_number: string | null;
-  account_name: string | null;
-  branch: string | null;
-}) =>
-  rpc<Payouts>("owner_save_bank", {
-    p_destination_type: a.destination_type,
-    p_provider: a.provider,
-    p_account_number: a.account_number,
-    p_account_name: a.account_name,
-    p_branch: a.branch,
-  });
-
-export const ownerSetSchedule = (schedule: string) => rpc<Payouts>("owner_set_schedule", { p_schedule: schedule });
 
 export const ownerNotifyPhones = () => rpc<{ phones: string[] }>("owner_notify_phones");
 export const ownerSaveNotifyPhones = (phones: string[]) => rpc<{ phones: string[] }>("owner_save_notify_phones", { p_phones: phones });

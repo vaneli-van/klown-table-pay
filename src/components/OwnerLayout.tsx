@@ -16,8 +16,8 @@ const NAV = [
   { to: "/owner/theme", label: "Theme" },
   { to: "/owner/menus", label: "Menu Studio" },
   { to: "/owner/integrations", label: "Integrations" },
-  { to: "/owner/payouts", label: "Payouts" },
-  { to: "/owner/bank", label: "Payout account" },
+  { to: "/owner/payouts", label: "Settlement" },
+  { to: "/owner/bank", label: "Settlement account" },
   { to: "/owner/settings", label: "Settings" },
 ];
 const BOTTOM = [{ to: "/owner/support", label: "Support" }];
@@ -121,7 +121,7 @@ function OwnerAuth() {
       <h1>{mode === "signin" ? "Owner sign in" : "Create account"}</h1>
       <p>
         {mode === "signin"
-          ? "Sign in to manage your restaurant on Klown — payments, theme, payouts and support."
+          ? "Sign in to manage your restaurant on Klown — payments, settlement, theme and support."
           : "Create your owner account with the email your restaurant was invited on."}
       </p>
       <form onSubmit={submit}>

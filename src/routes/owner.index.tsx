@@ -4,7 +4,7 @@ import OwnerLayout, { useOwner } from "@/components/OwnerLayout";
 import {
   ownerPaymentsSummary,
   ownerRecentPayments,
-  ownerPayouts,
+  ownerSettlement,
   ownerIntegrations,
   ownerTickets,
   cedis,
@@ -15,7 +15,7 @@ import {
   titleCase,
   type PaymentsSummary,
   type RecentPayment,
-  type Payouts,
+  type Settlement,
   type Integrations,
   type Ticket,
 } from "@/lib/owner-api";
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/owner/")({
   head: () => ({
     meta: [
       { title: `Klown — ${TITLE}` },
-      { name: "description", content: "A live snapshot of your restaurant on Klown: payments, payouts, integrations and support." },
+      { name: "description", content: "A live snapshot of your restaurant on Klown: payments, settlement, integrations and support." },
     ],
   }),
   component: () => (
@@ -52,10 +52,10 @@ function OverviewBody() {
     enabled: !!restaurantId,
     queryFn: () => ownerRecentPayments(6),
   });
-  const { data: payouts } = useQuery<Payouts>({
-    queryKey: ["owner_payouts", restaurantId],
+  const { data: settlement } = useQuery<Settlement>({
+    queryKey: ["owner_settlement", restaurantId],
     enabled: !!restaurantId,
-    queryFn: ownerPayouts,
+    queryFn: ownerSettlement,
   });
   const { data: integrations } = useQuery<Integrations>({
     queryKey: ["owner_integrations", restaurantId],
@@ -78,12 +78,8 @@ function OverviewBody() {
   const methods = summary?.by_method ?? [];
   const methodTotal = Math.max(1, methods.reduce((s, m) => s + m.pesewas, 0));
 
-  // --- payouts ---
-  const settings = payouts?.settings ?? null;
-  const scheduled = (payouts?.payouts ?? [])
-    .filter((p) => p.status !== "paid" && p.scheduled_for)
-    .sort((a, b) => new Date(a.scheduled_for as string).getTime() - new Date(b.scheduled_for as string).getTime())[0];
-  const defaultAccount = (payouts?.accounts ?? []).find((a) => a.is_default) ?? (payouts?.accounts ?? [])[0];
+  // --- settlement ---
+  const connected = !!settlement?.connected;
 
   // --- integrations ---
   const pos = integrations?.pos ?? [];
@@ -103,11 +99,11 @@ function OverviewBody() {
       <section className="ops-intro">
         <div>
           <h2>Overview</h2>
-          <p>A live snapshot of {name}{city ? `, ${city}` : ""} on Klown — payments, payouts, integrations and support, all in one place.</p>
+          <p>A live snapshot of {name}{city ? `, ${city}` : ""} on Klown: payments, settlement, integrations and support, all in one place.</p>
         </div>
         <div className="ops-top-actions">
           <Link to="/owner/payments" className="outline-button">Payments</Link>
-          <Link to="/owner/payouts" className="gold-button">Payouts</Link>
+          <Link to="/owner/payouts" className="gold-button">Settlement</Link>
         </div>
       </section>
 
@@ -171,17 +167,17 @@ function OverviewBody() {
       <div className="dashboard-grid">
         <div className="panel">
           <div className="panel-heading">
-            <div><span className="panel-kicker">Payouts</span><h2>Money on the way</h2></div>
-            <Link to="/owner/payouts" style={linkStyle}>View payouts →</Link>
+            <div><span className="panel-kicker">Settlement</span><h2>Paid to your account</h2></div>
+            <Link to="/owner/payouts" style={linkStyle}>View settlement →</Link>
           </div>
           <div className="metrics-grid own-metrics-2" style={{ marginTop: 4 }}>
-            <div className="metric-card"><span>Available</span><strong>{settings ? cedis(settings.available_pesewas) : "…"}</strong><small className="green">ready to pay out</small></div>
-            <div className="metric-card"><span>Pending</span><strong>{settings ? cedis(settings.pending_pesewas) : "…"}</strong><small className="gold">clearing</small></div>
+            <div className="metric-card"><span>Last 30 days</span><strong>{settlement ? cedis(settlement.settled_30d_pesewas) : "…"}</strong><small className="green">{settlement ? `${settlement.payments_30d} payment${settlement.payments_30d === 1 ? "" : "s"}` : ""}</small></div>
+            <div className="metric-card"><span>All time</span><strong>{settlement ? cedis(settlement.settled_all_pesewas) : "…"}</strong><small className="gold">through Klown</small></div>
           </div>
           <div className="detail-list" style={{ marginTop: 14 }}>
-            <div className="detail-row"><span>Next payout</span><b>{scheduled ? `${cedis(scheduled.amount_pesewas)} · ${shortDate(scheduled.scheduled_for)}` : "None scheduled"}</b></div>
-            <div className="detail-row"><span>Schedule</span><b>{settings ? titleCase(settings.schedule) : "—"}</b></div>
-            <div className="detail-row"><span>Default account</span><b>{defaultAccount ? `${titleCase(defaultAccount.provider)} ${defaultAccount.masked ?? ""}`.trim() : "Not set"}</b></div>
+            <div className="detail-row"><span>Last payment</span><b>{settlement?.last_payment_at ? shortDate(settlement.last_payment_at) : settlement ? "None yet" : "—"}</b></div>
+            <div className="detail-row"><span>Settles to</span><b>{connected ? `${settlement?.bank_name || "Bank account"} ${settlement?.masked ?? ""}`.trim() : "Not connected"}</b></div>
+            <div className="detail-row"><span>How</span><b>{connected ? "Direct to your bank via Paystack" : "Manual transfer from Klown"}</b></div>
           </div>
         </div>
 

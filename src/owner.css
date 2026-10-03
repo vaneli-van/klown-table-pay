@@ -20,7 +20,7 @@
 .own-bar { height: 7px; background: #e7e2da; overflow: hidden; }
 .own-bar i { display: block; height: 100%; }
 
-/* payments / payouts tables need their own column templates */
+/* payments / settlement tables need their own column templates */
 .table-row.own-pay-row { grid-template-columns: 1.2fr .9fr 1fr .9fr 1fr; min-width: 640px; }
 .table-row.own-team-row { grid-template-columns: 2fr .9fr 1fr .7fr; min-width: 560px; }
 .table-row.own-payout-row { grid-template-columns: 1.1fr 1.2fr 1fr .9fr 1fr; min-width: 640px; }
@@ -58,19 +58,6 @@
 .own-phone-body p { margin: 0 0 16px; color: #5f5a53; font-size: 12px; line-height: 1.5; }
 .own-phone-body button { border: 0; padding: 12px 16px; font-size: 11px; color: #171717; cursor: default; }
 
-/* payout schedule chooser */
-.own-schedule { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
-.own-schedule-opt { flex: 1; min-width: 130px; display: flex; flex-direction: column; gap: 4px; text-align: left; padding: 16px; background: #f3f0e9; border: 1px solid transparent; cursor: pointer; }
-.own-schedule-opt:hover:not(:disabled) { background: #ece7dd; }
-.own-schedule-opt b { font-weight: 400; font-size: 13px; }
-.own-schedule-opt small { color: #77736c; font-size: 10px; }
-.own-schedule-opt.is-on { border-color: var(--gold); background: #fbf4e6; }
-.own-schedule-opt.is-on b { color: #9a7840; }
-
-/* segmented control (bank type) */
-.own-seg { display: inline-flex; border: 1px solid #17171728; }
-.own-seg button { border: 0; background: transparent; padding: 10px 16px; font-size: 11px; color: #77736c; cursor: pointer; }
-.own-seg button.is-on { background: var(--gold); color: #171717; }
 
 @media (max-width: 860px) {
   .own-theme-grid { grid-template-columns: 1fr; }
@@ -80,13 +67,12 @@
   .own-preview-panel { position: static; }
 }
 
-/* Overview dashboard — label/value rows in payouts & integrations panels */
+/* Overview dashboard: label/value rows in settlement & integrations panels */
 .detail-list { display: flex; flex-direction: column; margin-top: 8px; }
 .detail-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid #e9e4da; font-size: 13px; }
 .detail-row:last-child { border-bottom: 0; }
 .detail-row > span { color: var(--muted); }
 .detail-row > b { font-weight: 700; text-align: right; display: inline-flex; align-items: center; gap: 4px; }
-
 
 /* Reviews page */
 .own-stars { letter-spacing: 1px; font-size: 14px; white-space: nowrap; }
