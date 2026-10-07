@@ -210,6 +210,16 @@ export const ownerInviteMember = (email: string, role = "owner") =>
   rpc<{ ok: boolean; status: string; email?: string; role?: string }>("owner_invite_member", { p_email: email, p_role: role });
 export const ownerRemoveMember = (email: string) => rpc<{ ok: boolean }>("owner_remove_member", { p_email: email });
 
+// ---- Floor staff (waiters, cashiers) + their SMS alert numbers ----
+// On every Klown payment (full or part) the diner app texts the waiter whose order it is and
+// every active cashier. The waiter is matched on first name, the name Odoo puts on the order.
+export type StaffRole = "waiter" | "cashier" | "manager";
+export type StaffMember = { id: string; name: string; role: StaffRole; phone: string | null; active: boolean };
+export const ownerStaffList = () => rpc<StaffMember[]>("owner_staff_list");
+export const ownerStaffSave = (m: { id?: string | null; name: string; role: StaffRole; phone: string; active: boolean }) =>
+  rpc<StaffMember>("owner_staff_save", { p_id: m.id ?? null, p_name: m.name, p_role: m.role, p_phone: m.phone, p_active: m.active });
+export const ownerStaffDelete = (id: string) => rpc<{ ok: boolean }>("owner_staff_delete", { p_id: id });
+
 export const ownerCreateTicket = (t: { category: string; priority: string; subject: string; body: string }) =>
   rpc<{ ref: string; status: string }>("owner_create_ticket", {
     p_category: t.category,

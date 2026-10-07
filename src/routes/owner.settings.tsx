@@ -6,7 +6,8 @@ import { supabase } from "@/lib/supabase";
 import {
   ownerProfile, ownerSaveProfile, ownerTeam, ownerInviteMember, ownerRemoveMember,
   ownerNotifyPhones, ownerSaveNotifyPhones,
-  titleCase, type OwnerProfile, type TeamMember,
+  ownerStaffList, ownerStaffSave, ownerStaffDelete,
+  titleCase, type OwnerProfile, type TeamMember, type StaffMember, type StaffRole,
 } from "@/lib/owner-api";
 
 const TITLE = "Settings";
@@ -32,6 +33,7 @@ function SettingsBody() {
       <ProfileCard />
       <TeamCard />
       <NotificationsCard />
+      <StaffCard />
     </>
   );
 }
@@ -252,6 +254,121 @@ function NotificationsCard() {
           <button className="gold-button" type="button" disabled={saving} onClick={save}>{saving ? "Saving…" : "Save alert numbers"}</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ---------------- Floor staff: waiters + cashiers who get the payment SMS ----------------
+const ROLE_LABEL: Record<StaffRole, string> = { waiter: "Waiter", cashier: "Cashier", manager: "Manager" };
+function staffErr(e: any): string {
+  const m = e?.message ?? "";
+  if (m === "bad_phone") return "that phone number doesn't look like a Ghana number (024 000 0000)";
+  if (m === "name_required") return "a name is needed";
+  if (m === "not_authorized") return "not authorised for this restaurant";
+  if (m === "too_many") return "the staff list is full (60)";
+  return m || "error";
+}
+function StaffCard() {
+  const { restaurantId, show } = useOwner();
+  const qc = useQueryClient();
+  const key = ["owner_staff", restaurantId];
+  const { data: staff = [], isLoading } = useQuery<StaffMember[]>({ queryKey: key, enabled: !!restaurantId, queryFn: ownerStaffList });
+  const [name, setName] = useState("");
+  const [role, setRole] = useState<StaffRole>("waiter");
+  const [phone, setPhone] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
+  const refresh = () => qc.invalidateQueries({ queryKey: key });
+
+  const add = async () => {
+    if (!name.trim()) { show("Type the person's name first"); return; }
+    setBusy("add");
+    try {
+      await ownerStaffSave({ name: name.trim(), role, phone: phone.trim(), active: true });
+      show(`Added ${name.trim()}`);
+      setName(""); setPhone(""); setRole("waiter");
+      refresh();
+    } catch (e: any) { show("Couldn't add: " + staffErr(e)); }
+    finally { setBusy(null); }
+  };
+  const toggle = async (m: StaffMember) => {
+    setBusy(m.id);
+    try { await ownerStaffSave({ id: m.id, name: m.name, role: m.role, phone: m.phone ?? "", active: !m.active }); refresh(); }
+    catch (e: any) { show("Couldn't update: " + staffErr(e)); }
+    finally { setBusy(null); }
+  };
+  const editPhone = async (m: StaffMember) => {
+    const v = window.prompt(`Phone number for ${m.name}`, toLocal(m.phone ?? ""));
+    if (v === null) return;
+    setBusy(m.id);
+    try { await ownerStaffSave({ id: m.id, name: m.name, role: m.role, phone: v.trim(), active: m.active }); show(v.trim() ? `Saved ${m.name}'s number` : `Cleared ${m.name}'s number`); refresh(); }
+    catch (e: any) { show("Couldn't save: " + staffErr(e)); }
+    finally { setBusy(null); }
+  };
+  const remove = async (m: StaffMember) => {
+    if (!window.confirm(`Remove ${m.name} from the staff list?`)) return;
+    setBusy(m.id);
+    try { await ownerStaffDelete(m.id); show(`Removed ${m.name}`); refresh(); }
+    catch (e: any) { show("Couldn't remove: " + staffErr(e)); }
+    finally { setBusy(null); }
+  };
+
+  const cashiers = staff.filter((m) => m.active && m.role === "cashier" && m.phone).length;
+  const waiters = staff.filter((m) => m.active && m.role === "waiter" && m.phone).length;
+  return (
+    <div className="panel">
+      <div className="panel-heading"><div><span className="panel-kicker">Floor staff</span><h2>Waiters &amp; cashiers</h2></div></div>
+      <div className="detail-note"><span>
+        When a table pays through Klown, the waiter who took the order and every cashier get a text: table, amount, and whether the bill is paid in full or in part.
+        Use the same first name the waiter has on the POS, so Klown can match the order to them.
+        {staff.length ? ` Right now ${waiters} waiter${waiters === 1 ? "" : "s"} and ${cashiers} cashier${cashiers === 1 ? "" : "s"} will be texted.` : ""}
+      </span></div>
+
+      <div className="admin-table" style={{ marginTop: 14 }}>
+        <div className="table-row own-staff-row table-head"><span>Name</span><span>Role</span><span>Phone</span><span>Alerts</span><span></span></div>
+        {isLoading ? (
+          <div className="empty-state"><h3>Loading…</h3></div>
+        ) : staff.length === 0 ? (
+          <div className="empty-state"><h3>No staff yet</h3><p>Add your waiters and cashier below.</p></div>
+        ) : (
+          staff.map((m) => (
+            <div className={"table-row own-staff-row" + (m.active ? "" : " inactive")} key={m.id}>
+              <span><b>{m.name}</b></span>
+              <span>{ROLE_LABEL[m.role] ?? titleCase(m.role)}</span>
+              <span>
+                <button className="quiet" type="button" style={{ padding: 0 }} disabled={busy === m.id} onClick={() => editPhone(m)}>
+                  {m.phone ? toLocal(m.phone) : "Add number"}
+                </button>
+              </span>
+              <span>
+                <button type="button" className={m.active && m.phone ? "status-badge status-success" : "status-badge"} style={{ border: 0, cursor: "pointer" }} disabled={busy === m.id} onClick={() => toggle(m)} title={m.active ? "Click to pause alerts" : "Click to resume alerts"}>
+                  {!m.active ? "Paused" : m.phone ? "On" : "No number"}
+                </button>
+              </span>
+              <span><button className="quiet" type="button" disabled={busy === m.id} onClick={() => remove(m)}>Remove</button></span>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="own-staff-add">
+        <div className="own-field"><label>Name</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Joel Ansah" />
+        </div>
+        <div className="own-field"><label>Role</label>
+          <select value={role} onChange={(e) => setRole(e.target.value as StaffRole)}>
+            <option value="waiter">Waiter</option>
+            <option value="cashier">Cashier</option>
+            <option value="manager">Manager</option>
+          </select>
+        </div>
+        <div className="own-field"><label>Phone</label>
+          <input inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="024 000 0000" />
+        </div>
+        <div className="own-actions">
+          <button className="gold-button" type="button" disabled={busy === "add" || !name.trim()} onClick={add}>{busy === "add" ? "Adding…" : "Add"}</button>
+        </div>
+      </div>
+      <div className="detail-note" style={{ marginTop: 10 }}><span>Managers on this list are not texted; they are here for your records. Owner alerts above are separate and still go to the numbers in SMS payment alerts.</span></div>
     </div>
   );
 }
