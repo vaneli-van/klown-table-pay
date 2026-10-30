@@ -86,3 +86,35 @@
 .own-stars .off { color: #d9d3c7; }
 .connection-list .own-review-comment { color: var(--ink, #171717); font-size: 12px; line-height: 1.45; margin-top: 6px; }
 .connection-list > div.is-low { box-shadow: inset 2px 0 0 #a26d50; padding-left: 12px; }
+
+
+/* ---------- v2 look (Oct 2026): owner pages inside .admin-v2 ---------- */
+.admin-v2 .metrics-grid.own-metrics-4 { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.admin-v2 .metrics-grid.own-metrics-3 { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.admin-v2 .metrics-grid.own-metrics-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.admin-v2 .own-method-legend { gap: 16px; margin-top: 16px; }
+.admin-v2 .own-method-row > span { font-size: 14px; font-weight: 600; }
+.admin-v2 .own-method-row > span i { width: 10px; height: 10px; border-radius: 3px; }
+.admin-v2 .own-method-row > span b { font-weight: 600; }
+.admin-v2 .own-method-row small { color: var(--a-text-2); font-size: 12px; }
+.admin-v2 .own-bar { height: 6px; border-radius: 999px; background: var(--a-hair); }
+.admin-v2 .own-bar i { border-radius: 999px; }
+.admin-v2 .table-row.own-staff-row.inactive > span:not(:last-child) { color: var(--a-muted); }
+.admin-v2 .own-staff-add :is(select, input) { border: 1px solid #d9dce3; border-radius: 8px; background: #fff; min-height: 36px; padding: 0 12px; font-size: 14px; }
+.admin-v2 .own-theme-grid { gap: 16px; margin-top: 0; }
+.admin-v2 .own-field > label { font-size: 13px; font-weight: 600; color: var(--a-ink); }
+.admin-v2 .own-field > small { color: var(--a-text-2); font-size: 12px; }
+.admin-v2 .own-thumb { background: #f7f8fa; border: 1px solid var(--a-line); border-radius: 10px; }
+.admin-v2 .own-thumb i { color: var(--a-muted); font-size: 11px; }
+.admin-v2 .own-colour input[type="color"] { border: 1px solid #d9dce3; border-radius: 8px; }
+.admin-v2 .own-preview-panel { top: 88px; }
+.admin-v2 .own-phone { border: 1px solid var(--a-line); border-radius: 22px; box-shadow: 0 12px 32px rgba(17,19,24,.10); }
+.admin-v2 .detail-row { border-bottom: 1px solid var(--a-hair); font-size: 14px; }
+.admin-v2 .detail-row > span { color: var(--a-text-2); }
+.admin-v2 .detail-row > b { font-weight: 600; }
+.admin-v2 .own-stars .on { color: #f59e0b; }
+.admin-v2 .own-stars .off { color: #d1d5db; }
+.admin-v2 .connection-list .own-review-comment { color: var(--a-ink); font-size: 14px; }
+.admin-v2 .connection-list > div.is-low { box-shadow: inset 3px 0 0 #dc2626; }
+.admin-v2 .table-row:is(.own-pay-row, .own-payout-row, .own-team-row, .own-staff-row):not(.table-head) { font-size: 14px; }
+@media (max-width: 600px) { .admin-v2 .metrics-grid:is(.own-metrics-4, .own-metrics-3) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

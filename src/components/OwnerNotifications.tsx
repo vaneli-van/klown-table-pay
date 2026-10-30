@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/lib/supabase";
+import { Bell } from "lucide-react";
 import { cedis, relTime } from "@/lib/owner-api";
 
 type Note = {
@@ -90,37 +91,24 @@ export default function OwnerNotifications({ restaurantId }: { restaurantId: str
   };
 
   return (
-    <div style={{ position: "relative" }}>
-      <button
-        className="outline-button"
-        aria-label="Payment alerts"
-        onClick={toggle}
-        style={{ position: "relative", padding: "0 12px", minWidth: 0 }}
-      >
-        <span style={{ fontSize: 16, lineHeight: 1 }}>🔔</span>
-        {unread > 0 && (
-          <span style={{ position: "absolute", top: -6, right: -6, background: "#c8a56b", color: "#171717", fontSize: 10, fontWeight: 700, minWidth: 16, height: 16, borderRadius: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
-            {unread > 9 ? "9+" : unread}
-          </span>
-        )}
+    <div className="a-pop-wrap">
+      <button className="a-icon-btn a-bell" aria-label={unread > 0 ? `Payment alerts, ${unread} new` : "Payment alerts"} aria-expanded={open} onClick={toggle}>
+        <Bell aria-hidden="true" />
+        {unread > 0 && <span className="a-badge">{unread > 9 ? "9+" : unread}</span>}
       </button>
 
       {open && (
         <>
-          <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 60 }} />
-          <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, width: 320, maxHeight: 420, overflowY: "auto", background: "#171717", color: "#f5f1e9", boxShadow: "0 12px 40px #17171744", zIndex: 61, border: "1px solid #2a2a2a" }}>
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #2a2a2a", fontSize: 10, letterSpacing: ".12em", textTransform: "uppercase", color: "#c8a56b" }}>Payment alerts</div>
+          <div className="a-pop-scrim" onClick={() => setOpen(false)} />
+          <div className="a-pop" role="dialog" aria-label="Payment alerts">
+            <div className="a-pop-head">Payment alerts</div>
             {notes.length === 0 ? (
-              <div style={{ padding: "20px 16px", fontSize: 13, color: "#9a958c" }}>No payments yet. Alerts appear here the moment a table pays via Klown.</div>
+              <div className="a-pop-empty">No payments yet. Alerts appear here the moment a table pays via Klown.</div>
             ) : (
               notes.map((n) => (
-                <button
-                  key={n.id}
-                  onClick={() => { setOpen(false); nav({ to: "/owner" }); }}
-                  style={{ display: "block", width: "100%", textAlign: "left", background: "none", border: "none", borderBottom: "1px solid #232323", padding: "12px 16px", cursor: "pointer", color: "#f5f1e9" }}
-                >
-                  <div style={{ fontSize: 13 }}>{label(n)}</div>
-                  <div style={{ fontSize: 11, color: "#9a958c", marginTop: 3 }}>{relTime(n.created_at)}</div>
+                <button key={n.id} className="a-pop-item" onClick={() => { setOpen(false); nav({ to: "/owner" }); }}>
+                  <span>{label(n)}</span>
+                  <small>{relTime(n.created_at)}</small>
                 </button>
               ))
             )}
@@ -129,13 +117,10 @@ export default function OwnerNotifications({ restaurantId }: { restaurantId: str
       )}
 
       {flash && (
-        <div
-          onClick={() => setFlash(null)}
-          style={{ position: "fixed", top: 16, right: 16, zIndex: 90, cursor: "pointer", minWidth: 260, background: "#171717", color: "#f5f1e9", padding: "14px 16px", borderLeft: "3px solid " + (flash.kind === "payment" ? "#c8a56b" : "#9b7544"), boxShadow: "0 6px 24px #17171733" }}
-        >
-          <div style={{ fontSize: 9, letterSpacing: ".12em", textTransform: "uppercase", color: "#c8a56b" }}>{flash.kind === "payment" ? "Payment received" : "POS notice"}</div>
-          <div style={{ fontSize: 14, marginTop: 6 }}>{label(flash)}</div>
-        </div>
+        <button className={"a-flash" + (flash.kind === "payment" ? "" : " warn")} onClick={() => setFlash(null)}>
+          <small>{flash.kind === "payment" ? "Payment received" : "POS notice"}</small>
+          <span>{label(flash)}</span>
+        </button>
       )}
     </div>
   );

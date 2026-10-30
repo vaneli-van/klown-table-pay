@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import OwnerLayout, { useOwner } from "@/components/OwnerLayout";
+import DailyBars from "@/components/DailyBars";
 import {
   ownerPaymentsSummary,
   ownerRecentPayments,
@@ -34,7 +35,7 @@ export const Route = createFileRoute("/owner/payments")({
   ),
 });
 
-const METHOD_COLORS = ["var(--gold)", "#373633", "#b8b1a6", "#628262"];
+const METHOD_COLORS = ["var(--a-accent)", "var(--a-ink)", "#9ca3af", "#15803d"];
 
 function PaymentsTabs() {
   const [tab, setTab] = useState("Payments");
@@ -83,10 +84,6 @@ function PaymentsBody() {
   });
 
   const daily = summary?.daily ?? [];
-  const maxDay = Math.max(1, ...daily.map((d) => d.pesewas));
-  const n = Math.max(1, daily.length - 1);
-  const points = daily.map((d, i) => `${(i / n) * 100},${40 - (d.pesewas / maxDay) * 36 - 2}`).join(" ");
-  const area = daily.length ? `0,40 ${points} 100,40` : "";
   const methods = summary?.by_method ?? [];
   const methodTotal = Math.max(1, methods.reduce((s, m) => s + m.pesewas, 0));
 
@@ -119,29 +116,15 @@ function PaymentsBody() {
       <div className="dashboard-grid">
         <div className="panel">
           <div className="panel-heading">
-            <div><span className="panel-kicker">Payments</span><h2>Daily volume</h2></div>
+            <div><h2>Daily volume</h2><p>Captured payments, last {summary?.days ?? 14} days</p></div>
           </div>
-          <div className="admin-chart">
-            <div className="chart-grid">
-              <span>{cedisShort(maxDay)}</span>
-              <span>{cedisShort(maxDay / 2)}</span>
-              <span>GH₵0</span>
-            </div>
-            <svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
-              {daily.length > 0 && <polygon points={area} fill="rgba(200,165,107,0.16)" />}
-              {daily.length > 0 && <polyline points={points} fill="none" stroke="var(--gold)" strokeWidth="1.1" vectorEffect="non-scaling-stroke" />}
-            </svg>
-            <div className="chart-labels">
-              <span>{daily[0]?.day ?? ""}</span>
-              <span>{daily[daily.length - 1]?.day ?? ""}</span>
-            </div>
-          </div>
+          <DailyBars days={daily} money={cedisShort} />
           {sumLoading && <div className="detail-note"><span>Loading payments…</span></div>}
         </div>
 
         <div className="panel">
           <div className="panel-heading">
-            <div><span className="panel-kicker">Payment methods</span><h2>How diners pay</h2></div>
+            <div><h2>How diners pay</h2><p>Share of volume by method</p></div>
           </div>
           {methods.length === 0 ? (
             <div className="empty-state"><h3>No payments yet</h3><p>Method split shows once diners start paying.</p></div>
@@ -166,7 +149,7 @@ function PaymentsBody() {
 
       <div className="panel table-panel">
         <div className="panel-heading">
-          <div><span className="panel-kicker">Activity</span><h2>Recent payments</h2></div>
+          <div><h2>Recent payments</h2></div>
         </div>
         <div className="admin-table">
           <div className="table-row own-pay-row table-head">

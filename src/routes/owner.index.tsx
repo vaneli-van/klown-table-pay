@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import DailyBars from "@/components/DailyBars";
 import OwnerLayout, { useOwner } from "@/components/OwnerLayout";
 import {
   ownerPaymentsSummary,
@@ -36,8 +37,7 @@ export const Route = createFileRoute("/owner/")({
   ),
 });
 
-const METHOD_COLORS = ["var(--gold)", "#373633", "#b8b1a6", "#628262"];
-const linkStyle: React.CSSProperties = { fontSize: 12, fontWeight: 700, color: "var(--gold)", textDecoration: "none", whiteSpace: "nowrap" };
+const METHOD_COLORS = ["var(--a-accent)", "var(--a-ink)", "#9ca3af", "#15803d"];
 
 function OverviewBody() {
   const { restaurantId, name, city } = useOwner();
@@ -70,10 +70,6 @@ function OverviewBody() {
 
   // --- daily volume chart geometry (mirrors the Payments page) ---
   const daily = summary?.daily ?? [];
-  const maxDay = Math.max(1, ...daily.map((d) => d.pesewas));
-  const n = Math.max(1, daily.length - 1);
-  const points = daily.map((d, i) => `${(i / n) * 100},${40 - (d.pesewas / maxDay) * 36 - 2}`).join(" ");
-  const area = daily.length ? `0,40 ${points} 100,40` : "";
 
   const methods = summary?.by_method ?? [];
   const methodTotal = Math.max(1, methods.reduce((s, m) => s + m.pesewas, 0));
@@ -98,8 +94,8 @@ function OverviewBody() {
     <>
       <section className="ops-intro">
         <div>
-          <h2>Overview</h2>
-          <p>A live snapshot of {name}{city ? `, ${city}` : ""} on Klown: payments, settlement, integrations and support, all in one place.</p>
+          <h2>{name}{city ? `, ${city}` : ""}</h2>
+          <p>Payments, settlement, integrations and support in one place.</p>
         </div>
         <div className="ops-top-actions">
           <Link to="/owner/payments" className="outline-button">Payments</Link>
@@ -120,30 +116,16 @@ function OverviewBody() {
       <div className="dashboard-grid">
         <div className="panel">
           <div className="panel-heading">
-            <div><span className="panel-kicker">Payments</span><h2>Daily volume</h2></div>
-            <Link to="/owner/payments" style={linkStyle}>View all →</Link>
+            <div><h2>Daily volume</h2><p>Captured payments, last {summary?.days ?? 14} days</p></div>
+            <Link to="/owner/payments" className="panel-link">View all</Link>
           </div>
-          <div className="admin-chart">
-            <div className="chart-grid">
-              <span>{cedisShort(maxDay)}</span>
-              <span>{cedisShort(maxDay / 2)}</span>
-              <span>GH₵0</span>
-            </div>
-            <svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
-              {daily.length > 0 && <polygon points={area} fill="rgba(200,165,107,0.16)" />}
-              {daily.length > 0 && <polyline points={points} fill="none" stroke="var(--gold)" strokeWidth="1.1" vectorEffect="non-scaling-stroke" />}
-            </svg>
-            <div className="chart-labels">
-              <span>{daily[0]?.day ?? ""}</span>
-              <span>{daily[daily.length - 1]?.day ?? ""}</span>
-            </div>
-          </div>
+          <DailyBars days={daily} money={cedisShort} />
           {sumLoading && <div className="detail-note"><span>Loading payments…</span></div>}
         </div>
 
         <div className="panel">
           <div className="panel-heading">
-            <div><span className="panel-kicker">Payment methods</span><h2>How diners pay</h2></div>
+            <div><h2>How diners pay</h2><p>Share of volume by method</p></div>
           </div>
           {methods.length === 0 ? (
             <div className="empty-state"><h3>No payments yet</h3><p>Method split shows once diners start paying.</p></div>
@@ -167,8 +149,8 @@ function OverviewBody() {
       <div className="dashboard-grid">
         <div className="panel">
           <div className="panel-heading">
-            <div><span className="panel-kicker">Settlement</span><h2>Paid to your account</h2></div>
-            <Link to="/owner/payouts" style={linkStyle}>View settlement →</Link>
+            <div><h2>Paid to your account</h2></div>
+            <Link to="/owner/payouts" className="panel-link">View settlement</Link>
           </div>
           <div className="metrics-grid own-metrics-2" style={{ marginTop: 4 }}>
             <div className="metric-card"><span>Last 30 days</span><strong>{settlement ? cedis(settlement.settled_30d_pesewas) : "…"}</strong><small className="green">{settlement ? `${settlement.payments_30d} payment${settlement.payments_30d === 1 ? "" : "s"}` : ""}</small></div>
@@ -183,8 +165,8 @@ function OverviewBody() {
 
         <div className="panel">
           <div className="panel-heading">
-            <div><span className="panel-kicker">Integrations</span><h2>POS &amp; devices</h2></div>
-            <Link to="/owner/integrations" style={linkStyle}>Manage →</Link>
+            <div><h2>POS &amp; devices</h2></div>
+            <Link to="/owner/integrations" className="panel-link">Manage</Link>
           </div>
           {pos.length === 0 && connectors.length === 0 ? (
             <div className="empty-state"><h3>No integration yet</h3><p>Connect your POS to sync live bills.</p></div>
@@ -210,15 +192,15 @@ function OverviewBody() {
           )}
           <div className="detail-note" style={{ marginTop: 14 }}>
             <span>{openTickets.length > 0 ? `${openTickets.length} open support ticket${openTickets.length === 1 ? "" : "s"}.` : "No open support tickets."} </span>
-            <Link to="/owner/support" style={linkStyle}>Support →</Link>
+            <Link to="/owner/support" className="panel-link">Support</Link>
           </div>
         </div>
       </div>
 
       <div className="panel table-panel">
         <div className="panel-heading">
-          <div><span className="panel-kicker">Activity</span><h2>Recent payments</h2></div>
-          <Link to="/owner/payments" style={linkStyle}>View all →</Link>
+          <div><h2>Recent payments</h2></div>
+          <Link to="/owner/payments" className="panel-link">View all</Link>
         </div>
         <div className="admin-table">
           <div className="table-row own-pay-row table-head">
