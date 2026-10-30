@@ -67,10 +67,10 @@ function OrdersBody() {
             <span>To</span>
             <input type="date" value={to} min={from} max={todayIso()} onChange={(e) => setTo(e.target.value)} />
           </label>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button type="button" onClick={() => setPreset(7)}>7d</button>
-            <button type="button" onClick={() => setPreset(30)}>30d</button>
-            <button type="button" onClick={() => setPreset(90)}>90d</button>
+          <div className="a-seg" role="group" aria-label="Quick range">
+            <button type="button" onClick={() => setPreset(7)}>7 days</button>
+            <button type="button" onClick={() => setPreset(30)}>30 days</button>
+            <button type="button" onClick={() => setPreset(90)}>90 days</button>
           </div>
         </div>
       </div>

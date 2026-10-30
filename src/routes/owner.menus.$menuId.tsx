@@ -9,10 +9,15 @@ export const Route = createFileRoute("/owner/menus/$menuId")({
 
 function EditorRoute() {
   const { menuId } = Route.useParams();
-  const { show } = useOwner();
   return (
     <OwnerLayout title="Menu editor">
-      <StudioEditor menuId={menuId} show={show} homeBase="/owner/menus" />
+      <EditorBody menuId={menuId} />
     </OwnerLayout>
   );
+}
+
+// useOwner() only works inside OwnerLayout, so it is read here, not in EditorRoute.
+function EditorBody({ menuId }: { menuId: string }) {
+  const { show } = useOwner();
+  return <StudioEditor menuId={menuId} show={show} homeBase="/owner/menus" />;
 }

@@ -1,6 +1,6 @@
 /** Daily volume bar chart in the v2 admin/owner style (needs admin.css). */
 export default function DailyBars({ days, money }: { days: { day: string; pesewas: number }[]; money: (pesewas: number) => string }) {
-  if (days.length === 0) return <p className="a-note">No payments in this period yet.</p>;
+  if (days.length === 0 || days.every((d) => !d.pesewas)) return <div className="empty-state"><h3>No payments yet</h3><p>Daily volume shows here once diners pay through Klown.</p></div>;
   const peak = Math.max(1, ...days.map((d) => d.pesewas));
   // round the top of the scale up to a tidy number so the gridlines read well
   const top = (() => {
