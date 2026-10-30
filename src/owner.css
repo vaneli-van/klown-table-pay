@@ -122,10 +122,3 @@
 /* stacked panels (Settings, Theme) need breathing room */
 .admin-v2 .a-content > .panel + .panel, .admin-v2 .a-content > section + .panel, .admin-v2 .panel + .panel:not(.dashboard-grid > .panel):not(.lower-grid > .panel):not(.a-grid-3 > .panel) { margin-top: 16px; }
 .admin-v2 .orders-range, .admin-v2 .a-seg { flex-wrap: wrap; }
-/* Menu Studio list (owner-studio.css) */
-.admin-v2 .st-menus-grid { gap: 16px; }
-.admin-v2 .st-menu-card { background: #fff; border: 1px solid var(--a-line); border-radius: 12px; padding: 18px; }
-.admin-v2 .st-menu-card h3 { font-family: inherit; font-weight: 700; font-size: 16px; }
-.admin-v2 .st-menu-card .st-meta { color: var(--a-text-2); font-size: 13px; }
-.admin-v2 .st-badge { height: 22px; font-size: 11px; letter-spacing: 0; text-transform: none; border: 0; }
-.admin-v2 .st-badge.pos { background: var(--a-info-bg); color: var(--a-info); }

@@ -402,3 +402,26 @@
 .admin-v2 .a-flash.warn small { color: #fcd34d; }
 .admin-v2 .a-flash span { display: block; font-size: 15px; margin-top: 2px; }
 .admin-v2 .a-user small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- Menu Studio (owner-studio.css) in the v2 look, admin + owner ---------- */
+.admin-v2 .st-menus-grid { gap: 16px; }
+.admin-v2 :is(.st-menu-card, .st-rail, .st-section, .st-history) { background: #fff; border: 1px solid var(--a-line); border-radius: 12px; }
+.admin-v2 .st-menu-card h3, .admin-v2 .st-section-head h3, .admin-v2 .st-dialog h3 { font-family: inherit; font-weight: 700; letter-spacing: -.005em; }
+.admin-v2 .st-toolbar .st-name-input { font-family: inherit; font-weight: 700; border-radius: 8px; }
+.admin-v2 .st-toolbar .st-name-input:hover { border-color: var(--a-line); }
+.admin-v2 :is(.st-menu-card .st-meta, .st-cat-item small, .st-item-main .st-item-desc, .st-rev .st-rev-when, .st-save-status, .st-mod-minmax label, .st-mod-price small, .st-hours-times span) { color: var(--a-text-2); }
+.admin-v2 :is(.st-rail h4, .st-history h4, .st-tsub, .st-dialog .st-field label) { font-family: inherit; font-size: 12px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--a-text-2); }
+.admin-v2 .st-section-head { background: #f7f8fa; border-bottom: 1px solid var(--a-line); }
+.admin-v2 .st-section-head .st-section-type { font-family: inherit; font-size: 11px; letter-spacing: .04em; color: var(--a-muted); }
+.admin-v2 .st-badge { height: 22px; display: inline-flex; align-items: center; padding: 0 8px; border-radius: 999px; font-family: inherit; font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none; border: 0; background: var(--a-neutral-bg); color: var(--a-neutral); }
+.admin-v2 .st-badge.live { background: var(--a-ok-bg); color: var(--a-ok); }
+.admin-v2 .st-badge.pos { background: var(--a-info-bg); color: var(--a-info); }
+.admin-v2 .st-tag { font-family: inherit; font-size: 11px; letter-spacing: 0; text-transform: none; color: var(--a-warn); background: var(--a-warn-bg); border-radius: 999px; padding: 3px 8px; }
+.admin-v2 .st-icon-btn { border: 1px solid #d9dce3; border-radius: 8px; width: 30px; height: 30px; color: var(--a-ink); }
+.admin-v2 .st-icon-btn:hover:not(:disabled) { border-color: #b9bec9; }
+.admin-v2 :is(.st-rail-search, .st-colour-hex, .st-dialog .st-field input, .st-dialog .st-field textarea, .st-dialog .st-field select, .st-tpl) { border: 1px solid #d9dce3; border-radius: 8px; }
+.admin-v2 .st-dialog { background: #fff; border: 1px solid var(--a-line); border-radius: 14px; box-shadow: 0 24px 60px rgba(17,19,24,.25); }
+.admin-v2 .st-dialog .st-field .st-hint { font-family: inherit; font-size: 12px; color: var(--a-text-2); }
+.admin-v2 :is(.st-colour-row input[type=color], .st-theme-preview, .st-share-qr) { border-color: var(--a-line); border-radius: 10px; }
+.admin-v2 .st-mod-group { background: #f7f8fa; border-color: var(--a-line); border-radius: 10px; }
+.admin-v2 .st-mods { border-top-color: var(--a-hair); }
