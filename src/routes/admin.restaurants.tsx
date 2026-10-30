@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { downloadCsv } from "@/lib/csv";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { ChevronDown, Download, Plus, Search, X } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
 import { Toast, useToast, useEscape } from "@/components/prototype";
 import { useAuth } from "@/lib/auth";
@@ -100,25 +101,23 @@ function Page() {
   );
 
   return (
-    <AdminLayout title={TITLE}>
-      <section className="ops-intro">
-        <div><h2>Restaurant directory</h2><p>Live network from your shared Klown Pay backend. Counts and volume computed from real data.</p></div>
-        <div className="ops-top-actions">
-          <div className="view-switch">
-            <button className={view === "directory" ? "active" : ""} onClick={() => setView("directory")}>Directory</button>
-            <button className={view === "pipeline" ? "active" : ""} onClick={() => setView("pipeline")}>Onboarding pipeline</button>
-          </div>
-          <button className="gold-button" onClick={() => { setWizard(true); setStep(1); }}>+ Add restaurant</button>
-        </div>
-      </section>
+    <AdminLayout title={TITLE}
+      subtitle={isLoading ? "Loading…" : `${(data ?? []).length} restaurants · ${(data ?? []).filter((r) => r.onboarding === "Live").length} live`}
+      actions={<>
+        <button className="outline-button" onClick={() => show(downloadCsv("restaurants.csv", filtered) ? "Exported restaurants.csv" : "Nothing to export yet")}><Download size={16} />Export CSV</button>
+        <button className="gold-button" onClick={() => { setWizard(true); setStep(1); }}><Plus size={16} />Add restaurant</button>
+      </>}>
+      <div className="view-switch" style={{ marginBottom: 20 }}>
+        <button className={view === "directory" ? "active" : ""} onClick={() => setView("directory")}>Directory</button>
+        <button className={view === "pipeline" ? "active" : ""} onClick={() => setView("pipeline")}>Onboarding pipeline</button>
+      </div>
 
       {view === "directory" ? (
         <>
           <section className="directory-toolbar">
-            <label className="search-field"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search restaurants, owners or locations" /></label>
-            <select value={status} onChange={(e) => setStatus(e.target.value)}><option>All statuses</option><option>Active</option><option>Paused</option></select>
-            <select value={pos} onChange={(e) => setPos(e.target.value)}><option>All POS</option><option>Odoo</option><option>Sambapos</option><option>Omega</option><option>Manual</option></select>
-            <button className="outline-button" onClick={() => show(downloadCsv("restaurants.csv", filtered) ? "Exported restaurants.csv" : "Nothing to export yet")}>Export CSV</button>
+            <label className="search-field"><Search size={16} aria-hidden="true" /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search restaurants, owners or locations" aria-label="Search restaurants" /></label>
+            <select aria-label="Status" value={status} onChange={(e) => setStatus(e.target.value)}><option>All statuses</option><option>Active</option><option>Paused</option></select>
+            <select aria-label="POS" value={pos} onChange={(e) => setPos(e.target.value)}><option>All POS</option><option>Odoo</option><option>Sambapos</option><option>Omega</option><option>Manual</option></select>
           </section>
           <div className="directory-summary"><b>{isLoading ? "…" : filtered.length} restaurants</b><span>Live data</span></div>
           <section className="restaurant-table">
@@ -143,7 +142,7 @@ function Page() {
                 <span><span className={r.onboarding === "Live" ? "status-pill live" : "status-pill"}>{r.onboarding}</span></span>
                 <span><b>{r.owner}</b><small>{r.sync}</small></span>
                 <span><span className={r.status === "Active" ? "status-pill live" : "status-pill"}>{r.status}</span></span>
-                <button className="row-menu" onClick={() => setConfirm(r)} aria-label={`Actions for ${r.name}`}>⌄</button>
+                <button className="row-menu" onClick={() => setConfirm(r)} aria-label={`Actions for ${r.name}`}><ChevronDown size={16} /></button>
               </div>
             ))}
           </section>
@@ -173,7 +172,7 @@ function Page() {
                 <span className="restaurant-logo large">{selected.name[0]}</span>
                 <div><span className="panel-kicker">Restaurant profile</span><h2>{selected.name}</h2><span className="status-pill live">{selected.status}</span></div>
               </div>
-              <button onClick={() => setSelected(null)}>✕</button>
+              <button aria-label="Close" onClick={() => setSelected(null)}><X size={18} /></button>
             </header>
             <div className="detail-tabs">
               {["Overview", "Locations", "POS", "Menu", "Bills & Payments", "Members", "Support", "Activity"].map((t) => (

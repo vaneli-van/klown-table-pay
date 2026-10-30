@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { downloadCsv } from "@/lib/csv";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Download, Search, X } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
 import { Toast, useToast, useEscape } from "@/components/prototype";
 import { useAuth } from "@/lib/auth";
@@ -50,29 +51,35 @@ function Page() {
   });
   const captured = all.filter((p) => p.status === "captured").reduce((s, p) => s + (p.total_pesewas || 0), 0);
   const refunds = all.filter((p) => p.refund_status).length;
+  const failed = all.filter((p) => p.status === "failed").length;
+  const count = (st: string) => (st === "All statuses" ? all.length : all.filter((p) => dispStatus(p) === st).length);
   const fee = sel ? Math.round((sel.total_pesewas || 0) * 0.005) : 0;
 
   return (
-    <AdminLayout title={TITLE}>
-      <div className="detail-tabs">
+    <AdminLayout title={TITLE} subtitle="Every payment attempt across the network"
+      actions={tab === "Payments" ? <button className="outline-button" onClick={() => show(downloadCsv("payments.csv", rows) ? "Exported payments.csv" : "Nothing to export yet")}><Download size={16} />Export CSV</button> : undefined}>
+      <div className="view-switch" style={{ marginBottom: 20 }}>
         {["Payments", "Split bills"].map((t) => (
           <button key={t} className={tab === t ? "active" : ""} onClick={() => setTab(t)}>{t}</button>
         ))}
       </div>
       {tab === "Split bills" ? <AdminSplits /> : <>
-      <section className="ops-intro">
-        <div><h2>Payments &amp; reconciliation</h2><p>Live payment feed from your shared Klown Pay backend.</p></div>
-        <button className="gold-button" onClick={() => show(downloadCsv("payments.csv", rows) ? "Exported payments.csv" : "Nothing to export yet")}>Export</button>
-      </section>
       <div className="member-kpis">
         <div><span>Captured volume</span><b>{isLoading ? "…" : ghsCompact(captured)}</b><small className="green">live</small></div>
         <div><span>Klown revenue</span><b>{isLoading ? "…" : ghsCompact(Math.round(captured * 0.005))}</b><small>0.5% of volume</small></div>
+        <div><span>Payments</span><b>{isLoading ? "…" : all.filter((p) => p.status === "captured").length}</b><small>{isLoading ? "" : `captured of ${all.length} attempts`}</small></div>
+        <div><span>Failed</span><b style={{ color: failed ? "#b91c1c" : undefined }}>{isLoading ? "…" : failed}</b><small>in the last {all.length} attempts</small></div>
         <div><span>Refunds</span><b>{isLoading ? "…" : refunds}</b></div>
-        <div><span>Payments</span><b>{isLoading ? "…" : all.length}</b></div>
       </div>
       <div className="member-toolbar">
-        <div className="search-field"><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ref, restaurant or method" /></div>
-        <select value={statusF} onChange={(e) => setStatusF(e.target.value)}><option>All statuses</option><option>Captured</option><option>Refunded</option><option>Failed</option><option>Pending</option></select>
+        <div className="a-seg" role="group" aria-label="Status">
+          {["All statuses", "Captured", "Pending", "Failed", "Refunded"].map((st) => (
+            <button key={st} className={statusF === st ? "on" : ""} aria-pressed={statusF === st} onClick={() => setStatusF(st)}>
+              {st === "All statuses" ? "All" : st} <span style={{ opacity: .6 }}>{isLoading ? "" : count(st)}</span>
+            </button>
+          ))}
+        </div>
+        <label className="search-field" style={{ marginLeft: "auto" }}><Search size={16} aria-hidden="true" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ref, restaurant or method" aria-label="Search payments" /></label>
       </div>
       <div className="restaurant-table">
         <div className="restaurant-table-head" style={{ gridTemplateColumns: COLS, minWidth: 820 }}>
@@ -84,14 +91,14 @@ function Page() {
           : rows.map((p) => {
             const s = dispStatus(p);
             return (
-              <button key={p.id} className="restaurant-table-row" style={{ gridTemplateColumns: COLS, minWidth: 820, width: "100%", textAlign: "left", border: 0, borderBottom: "1px solid #e7e2da", background: "transparent", cursor: "pointer" }}
+              <button key={p.id} className="restaurant-table-row" style={{ gridTemplateColumns: COLS, minWidth: 820, width: "100%", textAlign: "left", border: 0, borderBottom: "1px solid var(--a-hair)", background: "transparent", cursor: "pointer", font: "inherit", color: "inherit" }}
                 onClick={() => p.status === "captured" && !p.refund_status ? setSel(p) : show(`This payment is ${s} — no refund available`)}>
-                <span><b>{p.provider_ref ? "#" + p.provider_ref.slice(-6) : "#" + p.id.slice(0, 6)}</b></span>
+                <span className="a-ref">{p.provider_ref ? "#" + p.provider_ref.slice(-6) : "#" + p.id.slice(0, 6)}</span>
                 <span>{p.restaurant_name ?? "—"}</span>
                 <span>{titleCase(p.method) || p.provider || "—"}</span>
                 <span><b>{ghs(p.total_pesewas)}</b></span>
                 <span><span className={s === "Captured" ? "status-badge status-success" : s === "Failed" ? "status-badge status-danger" : s === "Pending" ? "status-badge status-warning" : "status-badge"}>{s}</span></span>
-                <span>{timeOf(p.created_at)}</span>
+                <span style={{ color: "var(--a-text-2)" }}>{new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · {timeOf(p.created_at)}</span>
               </button>
             );
           })}
@@ -99,12 +106,17 @@ function Page() {
       {sel && (
         <div className="ops-overlay" onClick={(e) => e.target === e.currentTarget && setSel(null)}>
           <div className="detail-drawer">
-            <header><div><span className="panel-kicker">Payment · {titleCase(sel.method) || sel.provider}</span><h2>{sel.provider_ref ? "#" + sel.provider_ref.slice(-6) : "#" + sel.id.slice(0, 6)}</h2><span className="status-pill live">Captured</span></div><button onClick={() => setSel(null)}>✕</button></header>
+            <header><div><span className="panel-kicker">Payment · {titleCase(sel.method) || sel.provider}</span><h2 className="a-ref" style={{ fontSize: 20 }}>{sel.provider_ref ? "#" + sel.provider_ref.slice(-6) : "#" + sel.id.slice(0, 6)}</h2><p style={{ margin: "4px 0 8px", color: "var(--a-text-2)" }}>{sel.restaurant_name ?? "—"} · {new Date(sel.created_at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p><span className="status-badge status-success">Captured</span></div><button aria-label="Close" onClick={() => setSel(null)}><X size={18} /></button></header>
             <section className="detail-content">
               <div className="detail-metrics">
-                <div><small>Captured</small><b>{ghs(sel.total_pesewas)}</b></div>
+                <div><small>Diner paid</small><b>{ghs(sel.total_pesewas)}</b>{(sel.total_pesewas || 0) > (sel.amount_pesewas || 0) && sel.amount_pesewas ? <small style={{ marginTop: 4 }}>bill {ghs(sel.amount_pesewas)} + tip {ghs((sel.total_pesewas || 0) - sel.amount_pesewas)}</small> : null}</div>
                 <div><small>Klown fee (0.5%)</small><b>{ghs(fee)}</b></div>
                 <div><small>Net to restaurant</small><b>{ghs((sel.total_pesewas || 0) - fee)}</b></div>
+              </div>
+              <div className="a-kv a-divider">
+                <div><span>Method</span><span>{titleCase(sel.method) || "—"}</span></div>
+                <div><span>Provider</span><span>{titleCase(sel.provider) || "—"}</span></div>
+                <div><span>Provider ref</span><span className="a-ref">{sel.provider_ref ?? "—"}</span></div>
               </div>
               <div className="detail-note">Refunds move real money via Paystack, so they stay disabled in this live test — reading is live, refunding is not wired yet.</div>
               <div className="wizard-actions">
@@ -151,7 +163,7 @@ function AdminSplits() {
         <div><span>Split total</span><b>{isLoading ? "…" : ghsCompact(data.reduce((s, x) => s + (x.split_total_pesewas || 0), 0))}</b></div>
       </div>
       <div className="member-toolbar">
-        <select value={rid} onChange={(e) => setRid(e.target.value)}>
+        <select aria-label="Restaurant" value={rid} onChange={(e) => setRid(e.target.value)}>
           <option value="">All restaurants</option>
           {restaurants.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
         </select>
