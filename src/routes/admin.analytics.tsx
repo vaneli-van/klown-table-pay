@@ -6,7 +6,8 @@ import { downloadCsv } from "@/lib/csv";
 import AdminLayout from "@/components/AdminLayout";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { ghs, ghsCompact, titleCase } from "@/lib/format";
+import { ghs, ghsCompact } from "@/lib/format";
+import { methodLabel } from "@/lib/owner-api";
 
 const TITLE = "Analytics";
 export const Route = createFileRoute("/admin/analytics")({
@@ -221,7 +222,7 @@ function Page() {
             {methods.length === 0 ? <p className="a-note">No payments yet.</p> :
               methods.map((m) => {
                 const pct = Math.round((m.revenue_pesewas / methodTotal) * 100);
-                return <HBar key={m.method} label={titleCase(m.method)} value={`${pct}%`} note={`${ghsCompact(m.revenue_pesewas)} · ${m.count} payments`} pct={pct} />;
+                return <HBar key={m.method} label={methodLabel(m.method)} value={`${pct}%`} note={`${ghsCompact(m.revenue_pesewas)} · ${m.count} payments`} pct={pct} />;
               })}
           </section>
         </div>

@@ -8,6 +8,7 @@ import { Toast, useToast } from "@/components/prototype";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { ghs, ghsCompact, titleCase, relTime } from "@/lib/format";
+import { methodLabel } from "@/lib/owner-api";
 
 const TITLE = "Overview";
 export const Route = createFileRoute("/admin/")({
@@ -108,7 +109,7 @@ function Page() {
     b.cap += (p.total_pesewas || 0) - tip; b.tip += tip;
   });
   const dayMax = Math.max(1, ...[...byDay.values()].map((b) => b.cap + b.tip));
-  const niceMax = (() => { const v = dayMax / 100; const p = Math.pow(10, Math.floor(Math.log10(v || 1))); const m = Math.ceil(v / p); return (m <= 2 ? 2 : m <= 5 ? 5 : 10) * p * 100; })();
+  const niceMax = (() => { const v = dayMax / 100; const p = Math.pow(10, Math.floor(Math.log10(v || 1))); const m = v / p; const step = [1, 1.2, 1.6, 2, 2.4, 3, 4, 5, 6, 8, 10].find((x) => x >= m) ?? 10; return step * p * 100; })();
   const spark = days.map((d) => { const b = byDay.get(accraDay(d))!; return b.cap + b.tip; });
 
   // ---- methods
@@ -126,7 +127,7 @@ function Page() {
     const health = (r.pos_health || "").toLowerCase();
     if (health === "offline" || health === "issue") out.push({ key: r.id + "h", bad: health === "offline", title: `${r.name}: POS ${health}`, note: `${titleCase(r.pos_provider) || "POS"} connection needs a look.` });
     if (r.last_sync_at && now - new Date(r.last_sync_at).getTime() > 7 * DAY && r.pos_status === "live") out.push({ key: r.id + "s", bad: false, title: `${r.name}: last synced ${relTime(r.last_sync_at)}`, note: "Check the connector token or POS credentials." });
-    if (r.pos_status && r.pos_status !== "live" && r.pos_status !== "paused") out.push({ key: r.id + "o", bad: false, title: `${r.name}: still in ${titleCase(r.pos_status).toLowerCase()}`, note: "Not taking Klown payments yet." });
+    if (r.pos_status !== "live" && r.pos_status !== "paused") out.push({ key: r.id + "o", bad: false, title: `${r.name}: not live yet`, note: r.pos_status ? `Onboarding stage: ${titleCase(r.pos_status).toLowerCase()}.` : "Still being set up, not taking Klown payments." });
     return out;
   });
   const failedToday = all.filter((p) => new Date(p.created_at).getTime() >= startOfToday() && (p.status || "").toLowerCase() === "failed").length;
@@ -241,7 +242,7 @@ function Page() {
                     <tr key={p.id}>
                       <td className="a-ref">{ref(p)}</td>
                       <td>{p.restaurant_name ?? "—"}</td>
-                      <td>{titleCase(p.method) || "—"}</td>
+                      <td>{methodLabel(p.method) || "—"}</td>
                       <td className="a-num" style={{ fontWeight: 600 }}>{ghs(p.total_pesewas)}</td>
                       <td><span className={statusClass(p)}>{p.refund_status ? "Refunded" : titleCase(p.status)}</span></td>
                       <td style={{ color: "var(--a-text-2)", whiteSpace: "nowrap" }}>{relTime(p.created_at)}</td>
@@ -258,7 +259,7 @@ function Page() {
             {restaurants.length === 0 && !isLoading ? <p className="a-note">No restaurants yet.</p> : restaurants.slice(0, 6).map((r) => (
               <div className="a-hbar" key={r.id}>
                 <div className="a-hbar-top">
-                  <span>{r.name}<span className={"status-pill a-mini-pill" + (r.pos_status === "live" ? " live" : "")}>{titleCase(r.pos_status) || "—"}</span></span>
+                  <span>{r.name}<span className={"status-pill a-mini-pill" + (r.pos_status === "live" ? " live" : "")}>{r.pos_status === "live" ? "Live" : titleCase(r.pos_status) || "Not live"}</span></span>
                   <span>{ghsCompact(r.volume_pesewas)}</span>
                 </div>
                 <div className="a-track"><div style={{ width: `${Math.max(2, ((r.volume_pesewas || 0) / topVol) * 100)}%` }} /></div>

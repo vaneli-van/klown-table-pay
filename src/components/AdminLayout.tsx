@@ -190,7 +190,8 @@ export default function AdminLayout({ title, subtitle, actions, children }: { ti
               {g.items.map((it) => {
                 const Icon = it.icon;
                 return (
-                  <Link key={it.to} to={it.to} className={isActive(it) ? "active" : undefined} aria-current={isActive(it) ? "page" : undefined}
+                  <Link key={it.to} to={it.to} activeProps={{ className: "" }} activeOptions={{ exact: true }}
+                    className={isActive(it) ? "active" : undefined} aria-current={isActive(it) ? "page" : undefined}
                     onClick={() => { setOpen(false); setQ(""); }}>
                     <Icon aria-hidden="true" />{it.label}
                   </Link>

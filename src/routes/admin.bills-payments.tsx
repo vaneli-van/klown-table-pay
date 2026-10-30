@@ -8,7 +8,7 @@ import { Toast, useToast, useEscape } from "@/components/prototype";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { ghs, ghsCompact, titleCase } from "@/lib/format";
-import { adminSplitBills } from "@/lib/owner-api";
+import { adminSplitBills, methodLabel } from "@/lib/owner-api";
 import SplitBillsTable, { isOutstanding, type SplitBill } from "@/components/SplitBills";
 
 const TITLE = "Bills & Payments";
@@ -95,7 +95,7 @@ function Page() {
                 onClick={() => p.status === "captured" && !p.refund_status ? setSel(p) : show(`This payment is ${s} — no refund available`)}>
                 <span className="a-ref">{p.provider_ref ? "#" + p.provider_ref.slice(-6) : "#" + p.id.slice(0, 6)}</span>
                 <span>{p.restaurant_name ?? "—"}</span>
-                <span>{titleCase(p.method) || p.provider || "—"}</span>
+                <span>{methodLabel(p.method) || p.provider || "—"}</span>
                 <span><b>{ghs(p.total_pesewas)}</b></span>
                 <span><span className={s === "Captured" ? "status-badge status-success" : s === "Failed" ? "status-badge status-danger" : s === "Pending" ? "status-badge status-warning" : "status-badge"}>{s}</span></span>
                 <span style={{ color: "var(--a-text-2)" }}>{new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · {timeOf(p.created_at)}</span>
@@ -106,7 +106,7 @@ function Page() {
       {sel && (
         <div className="ops-overlay" onClick={(e) => e.target === e.currentTarget && setSel(null)}>
           <div className="detail-drawer">
-            <header><div><span className="panel-kicker">Payment · {titleCase(sel.method) || sel.provider}</span><h2 className="a-ref" style={{ fontSize: 20 }}>{sel.provider_ref ? "#" + sel.provider_ref.slice(-6) : "#" + sel.id.slice(0, 6)}</h2><p style={{ margin: "4px 0 8px", color: "var(--a-text-2)" }}>{sel.restaurant_name ?? "—"} · {new Date(sel.created_at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p><span className="status-badge status-success">Captured</span></div><button aria-label="Close" onClick={() => setSel(null)}><X size={18} /></button></header>
+            <header><div><span className="panel-kicker">Payment · {methodLabel(sel.method) || sel.provider}</span><h2 className="a-ref" style={{ fontSize: 20 }}>{sel.provider_ref ? "#" + sel.provider_ref.slice(-6) : "#" + sel.id.slice(0, 6)}</h2><p style={{ margin: "4px 0 8px", color: "var(--a-text-2)" }}>{sel.restaurant_name ?? "—"} · {new Date(sel.created_at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p><span className="status-badge status-success">Captured</span></div><button aria-label="Close" onClick={() => setSel(null)}><X size={18} /></button></header>
             <section className="detail-content">
               <div className="detail-metrics">
                 <div><small>Diner paid</small><b>{ghs(sel.total_pesewas)}</b>{(sel.total_pesewas || 0) > (sel.amount_pesewas || 0) && sel.amount_pesewas ? <small style={{ marginTop: 4 }}>bill {ghs(sel.amount_pesewas)} + tip {ghs((sel.total_pesewas || 0) - sel.amount_pesewas)}</small> : null}</div>
@@ -114,7 +114,7 @@ function Page() {
                 <div><small>Net to restaurant</small><b>{ghs((sel.total_pesewas || 0) - fee)}</b></div>
               </div>
               <div className="a-kv a-divider">
-                <div><span>Method</span><span>{titleCase(sel.method) || "—"}</span></div>
+                <div><span>Method</span><span>{methodLabel(sel.method) || "—"}</span></div>
                 <div><span>Provider</span><span>{titleCase(sel.provider) || "—"}</span></div>
                 <div><span>Provider ref</span><span className="a-ref">{sel.provider_ref ?? "—"}</span></div>
               </div>

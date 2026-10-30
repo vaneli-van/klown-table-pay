@@ -31,6 +31,8 @@ export function methodLabel(m?: string | null): string {
     momo: "Mobile Money",
     mobile_money: "Mobile Money",
     card: "Card",
+    applepay: "Apple Pay",
+    apple_pay: "Apple Pay",
     klown_points: "Klown Points",
     points: "Klown Points",
     cash: "Cash",
